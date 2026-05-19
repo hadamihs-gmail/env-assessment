@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>環境経営診断システム</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; }
+  .gradient-bg { background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%); }
+  .card { box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+  .answer-btn { transition: all 0.2s; }
+  .answer-btn.selected { transform: scale(1.02); }
+  .progress-fill { transition: width 0.4s ease; }
+  .fade-in { animation: fadeIn 0.3s ease-in; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .rank-S { color: #7c3aed; }
+  .rank-A { color: #059669; }
+  .rank-B { color: #d97706; }
+  .rank-C { color: #ea580c; }
+  .rank-D { color: #dc2626; }
+  @media print { .no-print { display: none; } }
+</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<!-- ヘッダー -->
+<header class="gradient-bg text-white py-4 px-4 sticky top-0 z-50 shadow-lg">
+  <div class="max-w-2xl mx-auto flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <span class="text-2xl">🌿</span>
+      <span class="font-bold text-lg">環境経営診断</span>
+    </div>
+    <div id="progressInfo" class="text-sm opacity-80 hidden">
+      <span id="currentQ">0</span> / <span id="totalQ">60</span> 問
+    </div>
+  </div>
+</header>
+
+<!-- プログレスバー -->
+<div id="progressBar" class="hidden h-1.5 bg-green-900">
+  <div id="progressFill" class="progress-fill h-full bg-green-400" style="width:0%"></div>
+</div>
+
+<main class="max-w-2xl mx-auto px-4 py-6">
+
+  <!-- 画面1: スタート -->
+  <div id="screen-start" class="fade-in">
+    <div class="text-center mb-8">
+      <div class="text-6xl mb-4">🌍</div>
+      <h1 class="text-2xl font-bold text-gray-800 mb-2">環境経営診断システム</h1>
+      <p class="text-gray-500 text-sm">貴社の環境経営への対応状況を60問で診断します</p>
+    </div>
+
+    <div class="bg-white rounded-2xl card p-6 mb-6">
+      <h2 class="font-bold text-gray-700 mb-4 text-center">📋 基本情報の入力</h2>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">会社名 <span class="text-red-500">*</span></label>
+          <input id="companyName" type="text" placeholder="株式会社〇〇" class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">業種</label>
+          <select id="industry" class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 bg-white">
+            <option value="">選択してください</option>
+            <option>製造業</option>
+            <option>建設業</option>
+            <option>小売業・卸売業</option>
+            <option>飲食業・食品業</option>
+            <option>運輸・物流業</option>
+            <option>医療・介護・福祉</option>
+            <option>IT・情報サービス</option>
+            <option>不動産業</option>
+            <option>農林水産業</option>
+            <option>その他サービス業</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">回答者名</label>
+          <input id="respondentName" type="text" placeholder="担当者名（任意）" class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-green-50 rounded-2xl p-4 mb-6 border border-green-200">
+      <h3 class="font-bold text-green-800 text-sm mb-2">📌 診断について</h3>
+      <ul class="text-xs text-green-700 space-y-1">
+        <li>✓ 全8カテゴリ・60問（所要時間：約10〜15分）</li>
+        <li>✓ 各問「実施済み／一部実施／検討中／未着手」で回答</li>
+        <li>✓ カテゴリ別レーダーチャートで強み・弱みを可視化</li>
+        <li>✓ 結果はSupabaseに保存されます</li>
+      </ul>
+    </div>
+
+    <button onclick="startAssessment()" class="w-full gradient-bg text-white font-bold py-4 rounded-2xl text-lg shadow-lg hover:opacity-90 transition no-print">
+      診断を開始する →
+    </button>
+  </div>
+
+  <!-- 画面2: 質問 -->
+  <div id="screen-questions" class="hidden fade-in">
+    <div class="bg-white rounded-2xl card p-5 mb-4">
+      <div class="flex items-center gap-2 mb-1">
+        <span id="categoryIcon" class="text-xl"></span>
+        <span id="categoryName" class="text-xs font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full"></span>
+      </div>
+      <p id="questionText" class="text-gray-800 font-medium text-base leading-relaxed"></p>
+      <p id="questionNumber" class="text-xs text-gray-400 mt-2"></p>
+    </div>
+
+    <div id="answerButtons" class="space-y-3 mb-6">
+      <button onclick="answer(3)" class="answer-btn w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-5 rounded-2xl text-left flex items-center gap-3 shadow">
+        <span class="text-xl">✅</span>
+        <div><div class="font-bold">実施済み</div><div class="text-xs opacity-80 font-normal">すでに継続的に取り組んでいる</div></div>
+        <span class="ml-auto font-bold text-lg">3点</span>
+      </button>
+      <button onclick="answer(2)" class="answer-btn w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-5 rounded-2xl text-left flex items-center gap-3 shadow">
+        <span class="text-xl">🔵</span>
+        <div><div class="font-bold">一部実施</div><div class="text-xs opacity-80 font-normal">取り組んでいるが不十分</div></div>
+        <span class="ml-auto font-bold text-lg">2点</span>
+      </button>
+      <button onclick="answer(1)" class="answer-btn w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-4 px-5 rounded-2xl text-left flex items-center gap-3 shadow">
+        <span class="text-xl">🟡</span>
+        <div><div class="font-bold">検討中</div><div class="text-xs opacity-80 font-normal">今後取り組む予定がある</div></div>
+        <span class="ml-auto font-bold text-lg">1点</span>
+      </button>
+      <button onclick="answer(0)" class="answer-btn w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-4 px-5 rounded-2xl text-left flex items-center gap-3 shadow">
+        <span class="text-xl">⬜</span>
+        <div><div class="font-bold">未着手</div><div class="text-xs opacity-80 font-normal">まだ取り組んでいない</div></div>
+        <span class="ml-auto font-bold text-lg">0点</span>
+      </button>
+    </div>
+
+    <button onclick="goBack()" id="backBtn" class="w-full border border-gray-300 text-gray-500 py-3 rounded-2xl text-sm hover:bg-gray-50 no-print">
+      ← 前の問いに戻る
+    </button>
+  </div>
+
+  <!-- 画面3: 結果 -->
+  <div id="screen-result" class="hidden fade-in">
+    <div class="text-center mb-6">
+      <div class="text-5xl mb-2">📊</div>
+      <h2 class="text-2xl font-bold text-gray-800">診断結果</h2>
+      <p id="resultCompany" class="text-gray-500 text-sm mt-1"></p>
+    </div>
+
+    <!-- スコアカード -->
+    <div class="bg-white rounded-2xl card p-6 mb-4 text-center">
+      <div class="flex justify-center items-end gap-2 mb-1">
+        <span id="totalScore" class="text-6xl font-black text-gray-800"></span>
+        <span class="text-2xl text-gray-400 mb-2">/ 180点</span>
+      </div>
+      <div id="rankBadge" class="inline-block text-3xl font-black px-6 py-2 rounded-full mb-2"></div>
+      <p id="rankLabel" class="text-gray-600 font-medium"></p>
+      <div class="mt-3 bg-gray-100 rounded-full h-3 overflow-hidden">
+        <div id="scoreBar" class="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full transition-all duration-1000" style="width:0%"></div>
+      </div>
+      <p id="scorePercent" class="text-sm text-gray-500 mt-1"></p>
+    </div>
+
+    <!-- レーダーチャート -->
+    <div class="bg-white rounded-2xl card p-5 mb-4">
+      <h3 class="font-bold text-gray-700 mb-4 text-center">カテゴリ別スコア</h3>
+      <div style="max-height:320px;">
+        <canvas id="radarChart"></canvas>
+      </div>
+    </div>
+
+    <!-- カテゴリ別スコア一覧 -->
+    <div class="bg-white rounded-2xl card p-5 mb-4">
+      <h3 class="font-bold text-gray-700 mb-3">カテゴリ別詳細</h3>
+      <div id="categoryScoreList" class="space-y-3"></div>
+    </div>
+
+    <!-- アドバイス -->
+    <div class="bg-white rounded-2xl card p-5 mb-6">
+      <h3 class="font-bold text-gray-700 mb-3">💡 改善アドバイス</h3>
+      <div id="adviceList" class="space-y-3"></div>
+    </div>
+
+    <!-- アクションボタン -->
+    <div class="space-y-3 no-print">
+      <button onclick="saveResult()" id="saveBtn" class="w-full gradient-bg text-white font-bold py-4 rounded-2xl shadow-lg hover:opacity-90 transition">
+        📤 結果を保存する
+      </button>
+      <button onclick="window.print()" class="w-full border-2 border-green-600 text-green-700 font-bold py-3 rounded-2xl hover:bg-green-50 transition">
+        🖨 印刷・PDF保存
+      </button>
+      <button onclick="restartAssessment()" class="w-full border border-gray-300 text-gray-500 py-3 rounded-2xl hover:bg-gray-50 transition text-sm">
+        🔄 最初からやり直す
+      </button>
+    </div>
+
+    <p id="savedMessage" class="text-center text-green-600 font-bold text-sm mt-4 hidden">✅ 結果を保存しました</p>
+    <p id="savedError" class="text-center text-red-500 text-sm mt-4 hidden">⚠️ 保存に失敗しました。後でお試しください。</p>
+  </div>
+
+</main>
+
+<script>
+// Supabase初期化
+const SUPABASE_URL = 'https://qyepcsprvdocyjiyqmiv.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5ZXBjc3BydmRvY3lqaXlxbWl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MzEwODYsImV4cCI6MjA5NDIwNzA4Nn0.ijErc-4sW2NXCNn3ZjZsxQbSOEZaqkIAuoMyklgXkkA';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// 質問データ
+const categories = [
+  {
+    id: 'energy',
+    name: 'エネルギー管理',
+    icon: '⚡',
+    color: '#f59e0b',
+    maxScore: 30,
+    questions: [
+      '電気・ガス・燃料の使用量を月次で記録・把握していますか？',
+      'LED照明やインバーターエアコンなどの省エネ設備を導入していますか？',
+      'エネルギー使用量の削減目標（年間〇%削減など）を設定していますか？',
+      '太陽光発電・グリーン電力契約など再生可能エネルギーを利用していますか？',
+      '省エネ法の対象事業者の場合、定期報告を適切に行っていますか？',
+      '従業員への省エネ教育や節電の呼びかけを実施していますか？',
+      '社有車・配送車の燃料消費量を把握・管理していますか？',
+      '設備・機器のエネルギー効率を定期的に評価・見直していますか？',
+      '空調・照明の使用ルール（温度設定、消灯時刻など）を定めていますか？',
+      'エネルギーコスト削減の実績を定期的に確認・評価していますか？',
+    ]
+  },
+  {
+    id: 'waste',
+    name: '廃棄物管理',
+    icon: '♻️',
+    color: '#10b981',
+    maxScore: 24,
+    questions: [
+      '廃棄物の種類別（一般廃棄物・産業廃棄物等）に発生量を把握していますか？',
+      '産業廃棄物管理票（マニフェスト）を適正に運用していますか？',
+      '廃棄物削減の数値目標（発生量〇%削減など）を設定していますか？',
+      'リサイクル率の向上（紙・金属・プラスチック等の分別）に取り組んでいますか？',
+      '3R（Reduce・Reuse・Recycle）を意識した購買・使用のルールがありますか？',
+      'プラスチック使用量の削減（マイボトル・脱使い捨て等）に取り組んでいますか？',
+      '廃棄物処理業者が適正な許可を持っていることを確認していますか？',
+      '廃棄物の不法投棄防止のための管理・教育を行っていますか？',
+    ]
+  },
+  {
+    id: 'water',
+    name: '水資源管理',
+    icon: '💧',
+    color: '#3b82f6',
+    maxScore: 18,
+    questions: [
+      '水道使用量を月次で把握・記録していますか？',
+      '節水型設備（節水コマ・自動水栓・節水型トイレ等）を導入していますか？',
+      '水使用量の削減目標を設定していますか？',
+      '排水の水質管理・規制値遵守（水質汚濁防止法等）を適切に行っていますか？',
+      '雨水の活用・排水のリサイクル等に取り組んでいますか？',
+      '水漏れの定期チェックや早期対応の仕組みがありますか？',
+    ]
+  },
+  {
+    id: 'ghg',
+    name: 'CO2・温室効果ガス',
+    icon: '🌡️',
+    color: '#ef4444',
+    maxScore: 24,
+    questions: [
+      '自社のCO2排出量（Scope1：直接排出）を把握・計算していますか？',
+      '電力由来のCO2排出量（Scope2：間接排出）を把握・計算していますか？',
+      'CO2排出量の削減目標（年間〇%、または2030年〇%削減等）を設定していますか？',
+      'カーボンニュートラルに向けたロードマップ・計画を検討または策定していますか？',
+      'サプライチェーン全体（Scope3）のCO2排出量を把握しようとしていますか？',
+      'SBT（科学的根拠に基づく目標）やRE100等への参加・申請を検討していますか？',
+      'カーボンオフセット（J-クレジット・カーボンクレジット購入等）を実施していますか？',
+      '製品・サービスのライフサイクルCO2（LCA）を評価していますか？',
+    ]
+  },
+  {
+    id: 'procurement',
+    name: 'グリーン調達',
+    icon: '🛒',
+    color: '#8b5cf6',
+    maxScore: 18,
+    questions: [
+      '環境に配慮した製品・サービスの調達基準（グリーン購入基準）を設けていますか？',
+      'エコマーク・グリーンマーク等の環境認証製品を優先的に調達していますか？',
+      '主要なサプライヤーに対して環境対応状況を確認・要請していますか？',
+      '梱包材・包装材の削減や環境負荷の低い素材への切り替えに取り組んでいますか？',
+      '調達先の環境・社会リスク（違法伐採・児童労働等）を評価していますか？',
+      '輸送距離の短縮（ローカル調達・地産地消）によるCO2削減に取り組んでいますか？',
+    ]
+  },
+  {
+    id: 'legal',
+    name: '法令遵守・リスク管理',
+    icon: '⚖️',
+    color: '#6366f1',
+    maxScore: 24,
+    questions: [
+      '自社に適用される環境関連法令（大気汚染防止法・水質汚濁防止法等）を把握していますか？',
+      '化学物質の適正管理（PRTR法・SDS管理等）を行っていますか？',
+      '大気・騒音・振動・悪臭等の規制値を継続的にモニタリングしていますか？',
+      '環境関連の許認可（排水・排気・廃棄物処理等）を適切に取得・更新していますか？',
+      '法令改正・新たな規制の情報を定期的に収集する仕組みがありますか？',
+      '環境事故（漏洩・汚染等）発生時の対応手順（緊急時対応計画）を整備していますか？',
+      '気候変動リスク（物理リスク・移行リスク）を経営リスクとして評価していますか？',
+      '土壌汚染リスクの把握・モニタリングを適切に行っていますか？',
+    ]
+  },
+  {
+    id: 'ems',
+    name: '環境マネジメント体制',
+    icon: '🏢',
+    color: '#0891b2',
+    maxScore: 24,
+    questions: [
+      '環境方針・環境理念を策定し、全従業員に周知していますか？',
+      '環境担当者・環境管理責任者を明確に任命していますか？',
+      '環境目標と実施計画を年次で策定し、進捗を管理していますか？',
+      'ISO 14001またはエコアクション21等の環境マネジメント認証を取得・検討していますか？',
+      '環境に関する社内教育・研修を定期的に実施していますか？',
+      '環境パフォーマンスの内部点検・監査を定期的に実施していますか？',
+      '環境活動の実績（エネルギー・廃棄物等のデータ）を記録・集計していますか？',
+      '改善すべき環境課題を特定し、継続的改善（PDCAサイクル）を回していますか？',
+    ]
+  },
+  {
+    id: 'sdgs',
+    name: 'SDGs・情報開示',
+    icon: '🌏',
+    color: '#059669',
+    maxScore: 18,
+    questions: [
+      'SDGsの目標と自社事業・活動の関連を整理・明示していますか？',
+      '環境への取り組みをウェブサイト・パンフレット・報告書等で対外発信していますか？',
+      '地域の環境保全活動（清掃・植樹・環境イベント等）に参加・支援していますか？',
+      '従業員の環境意識向上のための社内イベント・キャンペーンを実施していますか？',
+      '生物多様性への配慮（緑地保全・外来種対策等）を事業活動に組み込んでいますか？',
+      '取引先選定において環境への取り組みを評価基準の一つとしていますか？',
+    ]
+  }
+];
+
+// 状態管理
+let state = {
+  currentCategoryIndex: 0,
+  currentQuestionIndex: 0,
+  answers: {},
+  companyName: '',
+  industry: '',
+  respondentName: '',
+  totalAnswered: 0
+};
+
+const totalQuestions = categories.reduce((sum, c) => sum + c.questions.length, 0);
+
+function startAssessment() {
+  const name = document.getElementById('companyName').value.trim();
+  if (!name) {
+    document.getElementById('companyName').focus();
+    document.getElementById('companyName').classList.add('ring-2', 'ring-red-400');
+    return;
+  }
+  state.companyName = name;
+  state.industry = document.getElementById('industry').value;
+  state.respondentName = document.getElementById('respondentName').value.trim();
+  state.currentCategoryIndex = 0;
+  state.currentQuestionIndex = 0;
+  state.answers = {};
+  state.totalAnswered = 0;
+
+  showScreen('questions');
+  document.getElementById('progressInfo').classList.remove('hidden');
+  document.getElementById('progressBar').classList.remove('hidden');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const cat = categories[state.currentCategoryIndex];
+  const q = cat.questions[state.currentQuestionIndex];
+  const globalIndex = getGlobalIndex();
+
+  document.getElementById('categoryIcon').textContent = cat.icon;
+  document.getElementById('categoryName').textContent = cat.name;
+  document.getElementById('questionText').textContent = q;
+  document.getElementById('questionNumber').textContent =
+    `${cat.name} ${state.currentQuestionIndex + 1} / ${cat.questions.length}問目`;
+
+  document.getElementById('currentQ').textContent = globalIndex + 1;
+  document.getElementById('totalQ').textContent = totalQuestions;
+
+  const pct = (globalIndex / totalQuestions) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+
+  document.getElementById('backBtn').style.opacity = globalIndex === 0 ? '0.3' : '1';
+  document.getElementById('backBtn').disabled = globalIndex === 0;
+
+  // 保存済みの回答を反映
+  const key = `${state.currentCategoryIndex}_${state.currentQuestionIndex}`;
+  const saved = state.answers[key];
+  const btns = document.querySelectorAll('.answer-btn');
+  btns.forEach((btn, i) => {
+    const pts = [3, 2, 1, 0][i];
+    btn.classList.toggle('selected', saved === pts);
+    btn.classList.toggle('ring-4', saved === pts);
+    btn.classList.toggle('ring-white', saved === pts);
+    btn.classList.toggle('ring-offset-2', saved === pts);
+  });
+
+  // フェードイン
+  const card = document.querySelector('#screen-questions .bg-white');
+  card.classList.remove('fade-in');
+  void card.offsetWidth;
+  card.classList.add('fade-in');
+}
+
+function getGlobalIndex() {
+  let idx = 0;
+  for (let i = 0; i < state.currentCategoryIndex; i++) {
+    idx += categories[i].questions.length;
+  }
+  return idx + state.currentQuestionIndex;
+}
+
+function answer(points) {
+  const key = `${state.currentCategoryIndex}_${state.currentQuestionIndex}`;
+  const isNew = !(key in state.answers);
+  state.answers[key] = points;
+  if (isNew) state.totalAnswered++;
+
+  setTimeout(() => {
+    const cat = categories[state.currentCategoryIndex];
+    if (state.currentQuestionIndex < cat.questions.length - 1) {
+      state.currentQuestionIndex++;
+    } else if (state.currentCategoryIndex < categories.length - 1) {
+      state.currentCategoryIndex++;
+      state.currentQuestionIndex = 0;
+    } else {
+      showResult();
+      return;
+    }
+    renderQuestion();
+  }, 150);
+}
+
+function goBack() {
+  if (state.currentQuestionIndex > 0) {
+    state.currentQuestionIndex--;
+  } else if (state.currentCategoryIndex > 0) {
+    state.currentCategoryIndex--;
+    state.currentQuestionIndex = categories[state.currentCategoryIndex].questions.length - 1;
+  }
+  renderQuestion();
+}
+
+function calcScores() {
+  const catScores = {};
+  categories.forEach((cat, ci) => {
+    let score = 0;
+    cat.questions.forEach((_, qi) => {
+      const key = `${ci}_${qi}`;
+      score += state.answers[key] || 0;
+    });
+    catScores[cat.id] = { score, max: cat.maxScore, pct: Math.round((score / cat.maxScore) * 100) };
+  });
+  const totalScore = Object.values(catScores).reduce((s, c) => s + c.score, 0);
+  return { catScores, totalScore };
+}
+
+function getRank(pct) {
+  if (pct >= 89) return { rank: 'S', label: '環境経営先進企業', color: '#7c3aed', bg: '#f3e8ff' };
+  if (pct >= 75) return { rank: 'A', label: '環境経営優良企業', color: '#059669', bg: '#d1fae5' };
+  if (pct >= 60) return { rank: 'B', label: '環境経営取組企業', color: '#d97706', bg: '#fef3c7' };
+  if (pct >= 40) return { rank: 'C', label: '環境経営基礎段階', color: '#ea580c', bg: '#ffedd5' };
+  return { rank: 'D', label: '環境経営要強化', color: '#dc2626', bg: '#fee2e2' };
+}
+
+function showResult() {
+  showScreen('result');
+  document.getElementById('progressInfo').classList.add('hidden');
+  document.getElementById('progressBar').classList.add('hidden');
+
+  const { catScores, totalScore } = calcScores();
+  const pct = Math.round((totalScore / 180) * 100);
+  const rankInfo = getRank(pct);
+
+  document.getElementById('resultCompany').textContent =
+    state.companyName + (state.industry ? `（${state.industry}）` : '');
+  document.getElementById('totalScore').textContent = totalScore;
+
+  const rankBadge = document.getElementById('rankBadge');
+  rankBadge.textContent = `ランク ${rankInfo.rank}`;
+  rankBadge.style.color = rankInfo.color;
+  rankBadge.style.background = rankInfo.bg;
+
+  document.getElementById('rankLabel').textContent = rankInfo.label;
+
+  setTimeout(() => {
+    document.getElementById('scoreBar').style.width = pct + '%';
+  }, 100);
+  document.getElementById('scorePercent').textContent = `達成率 ${pct}%（${totalScore} / 180点）`;
+
+  // カテゴリ別スコア一覧
+  const list = document.getElementById('categoryScoreList');
+  list.innerHTML = '';
+  categories.forEach(cat => {
+    const cs = catScores[cat.id];
+    const barPct = cs.pct;
+    const div = document.createElement('div');
+    div.innerHTML = `
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-sm font-medium text-gray-700">${cat.icon} ${cat.name}</span>
+        <span class="text-sm font-bold text-gray-800">${cs.score}/${cs.max}点 (${barPct}%)</span>
+      </div>
+      <div class="bg-gray-100 rounded-full h-2.5 overflow-hidden">
+        <div class="h-full rounded-full" style="width:${barPct}%;background:${cat.color};transition:width 0.8s ease"></div>
+      </div>
+    `;
+    list.appendChild(div);
+    setTimeout(() => {}, 100);
+  });
+
+  // レーダーチャート
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  if (window._chart) window._chart.destroy();
+  window._chart = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: categories.map(c => c.name),
+      datasets: [{
+        label: '達成率（%）',
+        data: categories.map(c => catScores[c.id].pct),
+        backgroundColor: 'rgba(5, 150, 105, 0.2)',
+        borderColor: 'rgba(5, 150, 105, 0.8)',
+        borderWidth: 2,
+        pointBackgroundColor: categories.map(c => c.color),
+        pointRadius: 5,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      scales: {
+        r: {
+          min: 0, max: 100,
+          ticks: { stepSize: 25, font: { size: 10 } },
+          pointLabels: { font: { size: 10 } }
+        }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  // アドバイス
+  const adviceList = document.getElementById('adviceList');
+  adviceList.innerHTML = '';
+  const adviceData = {
+    energy: {
+      high: 'エネルギー管理は優秀です。再エネ100%化やSBT認定取得でさらなる差別化を狙いましょう。',
+      mid: '省エネ設備への投資や再エネ契約切り替えを検討してみましょう。補助金制度も活用できます。',
+      low: 'まずはエネルギー使用量の「見える化」から始めましょう。電気・ガスの月次記録が第一歩です。'
+    },
+    waste: {
+      high: '廃棄物管理は高水準です。廃棄物ゼロ（ゼロエミッション）への挑戦も視野に入れてください。',
+      mid: '廃棄物の分別・リサイクル率向上と、マニフェスト管理の徹底を進めましょう。',
+      low: '廃棄物の種類別記録と、産業廃棄物の適正処理から取り組みを始めましょう。'
+    },
+    water: {
+      high: '水資源管理は良好です。水使用量データの対外開示や節水型設備の更新を検討してください。',
+      mid: '節水型設備の導入と月次の水道使用量記録を始めましょう。水漏れチェックも効果的です。',
+      low: 'まずは水道使用量を毎月チェックすることから始めましょう。節水コマの設置は低コストで効果的です。'
+    },
+    ghg: {
+      high: 'CO2管理は先進的です。Scope3の把握やSBT認定、TCFDへの対応でリーダーシップを示しましょう。',
+      mid: 'Scope1・2の把握ができたら、削減目標を設定しましょう。J-クレジット活用も検討を。',
+      low: 'まず電気・ガス・燃料のCO2換算から始めましょう。排出係数を使った簡易計算で十分です。'
+    },
+    procurement: {
+      high: 'グリーン調達は優秀です。サプライヤーへの環境基準要請や生物多様性配慮にも拡張しましょう。',
+      mid: '調達基準にグリーン購入の視点を加え、エコマーク製品の優先購入を始めましょう。',
+      low: 'まずはコピー用紙・洗剤など身近な物品から環境配慮製品への切り替えを始めましょう。'
+    },
+    legal: {
+      high: '法令遵守は万全です。気候変動リスクの開示（TCFD準拠）への対応を検討しましょう。',
+      mid: '適用法令リストを作成し、改正情報の定期収集の仕組みを整えましょう。',
+      low: '自社に適用される環境法令の洗い出しが最優先です。専門家への相談も活用してください。'
+    },
+    ems: {
+      high: '環境マネジメント体制は優秀です。ISO14001取得やTCFD開示で信頼性をさらに高めましょう。',
+      mid: '環境方針の策定と環境担当者の任命からPDCAサイクルを回し始めましょう。',
+      low: 'まず環境方針を一枚にまとめ、従業員へ周知することから始めましょう。エコアクション21も有効です。'
+    },
+    sdgs: {
+      high: 'SDGs対応・情報開示は優秀です。統合報告書やサステナビリティレポートの発行を検討しましょう。',
+      mid: 'SDGsの目標と自社事業の関連を整理し、Webサイトで発信することを始めましょう。',
+      low: 'まずSDGsの17目標を確認し、自社の事業と関係する目標を2〜3個選ぶことから始めましょう。'
+    }
+  };
+
+  categories.forEach(cat => {
+    const pctVal = catScores[cat.id].pct;
+    const level = pctVal >= 70 ? 'high' : pctVal >= 40 ? 'mid' : 'low';
+    const advice = adviceData[cat.id][level];
+    const div = document.createElement('div');
+    div.className = 'p-3 rounded-xl border-l-4 bg-gray-50';
+    div.style.borderColor = cat.color;
+    div.innerHTML = `
+      <div class="font-bold text-sm mb-1" style="color:${cat.color}">${cat.icon} ${cat.name}</div>
+      <p class="text-xs text-gray-600 leading-relaxed">${advice}</p>
+    `;
+    adviceList.appendChild(div);
+  });
+
+  // スコアバーのアニメーション（遅延）
+  setTimeout(() => {
+    document.querySelectorAll('#categoryScoreList .bg-gray-100 div').forEach(el => {
+      el.style.width = el.style.width;
+    });
+  }, 200);
+}
+
+async function saveResult() {
+  const btn = document.getElementById('saveBtn');
+  btn.textContent = '⏳ 保存中...';
+  btn.disabled = true;
+
+  const { catScores, totalScore } = calcScores();
+  const pct = Math.round((totalScore / 180) * 100);
+  const { rank } = getRank(pct);
+
+  try {
+    const { error } = await supabase.from('env_assessment_results').insert({
+      company_name: state.companyName,
+      industry: state.industry || null,
+      respondent_name: state.respondentName || null,
+      total_score: totalScore,
+      max_score: 180,
+      rank: rank,
+      category_scores: catScores,
+      answers: state.answers
+    });
+    if (error) throw error;
+    document.getElementById('savedMessage').classList.remove('hidden');
+    btn.textContent = '✅ 保存済み';
+  } catch (e) {
+    console.error(e);
+    document.getElementById('savedError').classList.remove('hidden');
+    btn.textContent = '📤 結果を保存する';
+    btn.disabled = false;
+  }
+}
+
+function showScreen(name) {
+  document.getElementById('screen-start').classList.add('hidden');
+  document.getElementById('screen-questions').classList.add('hidden');
+  document.getElementById('screen-result').classList.add('hidden');
+  const el = document.getElementById(`screen-${name}`);
+  el.classList.remove('hidden');
+  el.classList.remove('fade-in');
+  void el.offsetWidth;
+  el.classList.add('fade-in');
+  window.scrollTo(0, 0);
+}
+
+function restartAssessment() {
+  state = { currentCategoryIndex: 0, currentQuestionIndex: 0, answers: {}, companyName: '', industry: '', respondentName: '', totalAnswered: 0 };
+  document.getElementById('companyName').value = '';
+  document.getElementById('industry').value = '';
+  document.getElementById('respondentName').value = '';
+  document.getElementById('savedMessage').classList.add('hidden');
+  document.getElementById('savedError').classList.add('hidden');
+  document.getElementById('saveBtn').textContent = '📤 結果を保存する';
+  document.getElementById('saveBtn').disabled = false;
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('progressInfo').classList.add('hidden');
+  document.getElementById('progressBar').classList.add('hidden');
+  showScreen('start');
+}
+</script>
+</body>
+</html>
