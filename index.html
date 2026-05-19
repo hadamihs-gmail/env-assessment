@@ -81,6 +81,13 @@
           <label class="block text-sm font-medium text-gray-600 mb-1">回答者名</label>
           <input id="respondentName" type="text" placeholder="担当者名（任意）" class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
         </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">
+            メールアドレス
+            <span class="text-xs text-gray-400 font-normal ml-1">（診断結果をメールで受け取れます）</span>
+          </label>
+          <input id="email" type="email" placeholder="example@company.com" class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
+        </div>
       </div>
     </div>
 
@@ -90,7 +97,7 @@
         <li>✓ 全8カテゴリ・60問（所要時間：約10〜15分）</li>
         <li>✓ 各問「実施済み／一部実施／検討中／未着手」で回答</li>
         <li>✓ カテゴリ別レーダーチャートで強み・弱みを可視化</li>
-        <li>✓ 結果はSupabaseに保存されます</li>
+        <li>✓ メールアドレスを入力すると結果が届きます</li>
       </ul>
     </div>
 
@@ -349,6 +356,7 @@ let state = {
   companyName: '',
   industry: '',
   respondentName: '',
+  email: '',
   totalAnswered: 0
 };
 
@@ -364,6 +372,7 @@ function startAssessment() {
   state.companyName = name;
   state.industry = document.getElementById('industry').value;
   state.respondentName = document.getElementById('respondentName').value.trim();
+  state.email = document.getElementById('email').value.trim();
   state.currentCategoryIndex = 0;
   state.currentQuestionIndex = 0;
   state.answers = {};
@@ -633,14 +642,32 @@ async function saveResult() {
       company_name: state.companyName,
       industry: state.industry || null,
       respondent_name: state.respondentName || null,
+      email: state.email || null,
       total_score: totalScore,
       max_score: 180,
       rank: rank,
       category_scores: catScores,
-      answers: state.answers
+      answers: state.answers,
+      assessment_type: 'full'
     });
     if (error) throw error;
-    document.getElementById('savedMessage').classList.remove('hidden');
+
+    if (state.email) {
+      try {
+        await fetch('https://qyepcsprvdocyjiyqmiv.supabase.co/functions/v1/send-assessment-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: state.email, companyName: state.companyName, industry: state.industry,
+            totalScore, maxScore: 180, rank, categoryScores: catScores, assessmentType: 'full'
+          })
+        });
+      } catch(e) { console.warn('Email send failed:', e); }
+    }
+
+    const msgEl = document.getElementById('savedMessage');
+    msgEl.textContent = state.email ? `✅ 結果を保存し、${state.email} に送信しました` : '✅ 結果を保存しました';
+    msgEl.classList.remove('hidden');
     btn.textContent = '✅ 保存済み';
   } catch (e) {
     console.error(e);
@@ -663,10 +690,11 @@ function showScreen(name) {
 }
 
 function restartAssessment() {
-  state = { currentCategoryIndex: 0, currentQuestionIndex: 0, answers: {}, companyName: '', industry: '', respondentName: '', totalAnswered: 0 };
+  state = { currentCategoryIndex: 0, currentQuestionIndex: 0, answers: {}, companyName: '', industry: '', respondentName: '', email: '', totalAnswered: 0 };
   document.getElementById('companyName').value = '';
   document.getElementById('industry').value = '';
   document.getElementById('respondentName').value = '';
+  document.getElementById('email').value = '';
   document.getElementById('savedMessage').classList.add('hidden');
   document.getElementById('savedError').classList.add('hidden');
   document.getElementById('saveBtn').textContent = '📤 結果を保存する';

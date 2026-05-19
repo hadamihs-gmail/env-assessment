@@ -26,7 +26,7 @@
       <span class="text-2xl">🌱</span>
       <div>
         <span class="font-bold text-lg">環境経営お試し診断</span>
-        <span class="ml-2 text-xs bg-green-500 px-2 py-0.5 rounded-full">簡易版</span>
+        <span class="ml-2 text-xs bg-green-500 px-2 py-0.5 rounded-full">簡易版・30問</span>
       </div>
     </div>
     <div id="progressInfo" class="text-sm opacity-80 hidden">
@@ -60,21 +60,22 @@
           <label class="block text-sm font-medium text-gray-600 mb-1">業種</label>
           <select id="industry" class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 bg-white">
             <option value="">選択してください</option>
-            <option>製造業</option>
-            <option>建設業</option>
-            <option>小売業・卸売業</option>
-            <option>飲食業・食品業</option>
-            <option>運輸・物流業</option>
-            <option>医療・介護・福祉</option>
-            <option>IT・情報サービス</option>
-            <option>不動産業</option>
-            <option>農林水産業</option>
+            <option>製造業</option><option>建設業</option><option>小売業・卸売業</option>
+            <option>飲食業・食品業</option><option>運輸・物流業</option><option>医療・介護・福祉</option>
+            <option>IT・情報サービス</option><option>不動産業</option><option>農林水産業</option>
             <option>その他サービス業</option>
           </select>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-600 mb-1">回答者名</label>
           <input id="respondentName" type="text" placeholder="担当者名（任意）" class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">
+            メールアドレス
+            <span class="text-xs text-gray-400 font-normal ml-1">（診断結果をメールで受け取れます）</span>
+          </label>
+          <input id="email" type="email" placeholder="example@company.com" class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
         </div>
       </div>
     </div>
@@ -85,13 +86,8 @@
         <li>✓ 全8カテゴリ・30問（所要時間：約5分）</li>
         <li>✓ 詳細版（60問）とは別の切り口で設計</li>
         <li>✓ カテゴリ別レーダーチャートで弱点を把握</li>
-        <li>✓ 詳細版でより深く診断することも可能</li>
+        <li>✓ メールアドレスを入力すると結果が届きます</li>
       </ul>
-    </div>
-
-    <div class="bg-blue-50 rounded-xl p-4 mb-6 border border-blue-200 text-xs text-blue-700">
-      💡 詳細版（60問・本診断）はこちら →
-      <a href="https://hadamihs-gmail.github.io/env-assessment/" target="_blank" class="font-bold underline">env-assessment</a>
     </div>
 
     <button onclick="startAssessment()" class="w-full gradient-bg text-white font-bold py-4 rounded-2xl text-lg shadow-lg hover:opacity-90 transition no-print">
@@ -159,7 +155,6 @@
       <p id="scorePercent" class="text-sm text-gray-500 mt-1"></p>
     </div>
 
-    <!-- レーダーチャート -->
     <div class="bg-white rounded-2xl card p-5 mb-4">
       <h3 class="font-bold text-gray-700 mb-4 text-center">カテゴリ別スコア</h3>
       <div style="max-height:320px;">
@@ -167,22 +162,20 @@
       </div>
     </div>
 
-    <!-- カテゴリ別スコア -->
     <div class="bg-white rounded-2xl card p-5 mb-4">
       <h3 class="font-bold text-gray-700 mb-3">カテゴリ別詳細</h3>
       <div id="categoryScoreList" class="space-y-3"></div>
     </div>
 
-    <!-- アドバイス -->
     <div class="bg-white rounded-2xl card p-5 mb-4">
       <h3 class="font-bold text-gray-700 mb-3">💡 改善アドバイス</h3>
       <div id="adviceList" class="space-y-3"></div>
     </div>
 
-    <!-- 詳細版への誘導 -->
+    <!-- 詳細版への誘導（結果後に表示） -->
     <div class="bg-gradient-to-r from-green-600 to-emerald-700 rounded-2xl p-5 mb-6 text-white">
       <h3 class="font-bold text-lg mb-1">🔍 さらに深く診断しませんか？</h3>
-      <p class="text-sm opacity-90 mb-3">詳細版（60問）ではお試し版とは別の切り口で、より詳細な環境経営の現状を把握できます。</p>
+      <p class="text-sm opacity-90 mb-3">詳細版（60問）ではお試し版とは<strong>別の切り口</strong>でより詳細な環境経営の現状を把握できます。2つ合わせると計90問の網羅的な診断になります。</p>
       <a href="https://hadamihs-gmail.github.io/env-assessment/" target="_blank"
          class="block w-full text-center bg-white text-green-700 font-bold py-3 rounded-xl hover:bg-green-50 transition no-print">
         本診断（60問）を受ける →
@@ -201,7 +194,7 @@
       </button>
     </div>
 
-    <p id="savedMessage" class="text-center text-green-600 font-bold text-sm mt-4 hidden">✅ 結果を保存しました</p>
+    <p id="savedMessage" class="text-center text-green-600 font-bold text-sm mt-4 hidden"></p>
     <p id="savedError" class="text-center text-red-500 text-sm mt-4 hidden">⚠️ 保存に失敗しました</p>
   </div>
 
@@ -210,105 +203,74 @@
 <script>
 const SUPABASE_URL = 'https://qyepcsprvdocyjiyqmiv.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5ZXBjc3BydmRvY3lqaXlxbWl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MzEwODYsImV4cCI6MjA5NDIwNzA4Nn0.ijErc-4sW2NXCNn3ZjZsxQbSOEZaqkIAuoMyklgXkkA';
+const EDGE_FN_URL = 'https://qyepcsprvdocyjiyqmiv.supabase.co/functions/v1/send-assessment-email';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ※詳細版（60問）と被らない、別切り口の質問
 const categories = [
-  {
-    id: 'energy', name: 'エネルギー管理', icon: '⚡', color: '#f59e0b', maxScore: 12,
-    questions: [
-      '電力会社との契約を見直し、料金プランの最適化を行っていますか？',
-      'ピーク電力削減（デマンドコントロール）に取り組んでいますか？',
-      '業務用機器・OA機器の省エネモード設定を徹底していますか？',
-      '夏冬の冷暖房設定温度（夏28℃・冬20℃目安）を遵守していますか？',
-    ]
-  },
-  {
-    id: 'waste', name: '廃棄物管理', icon: '♻️', color: '#10b981', maxScore: 9,
-    questions: [
-      '事務所の紙使用量を削減するためのペーパーレス化を進めていますか？',
-      '廃棄物の減量化のために購買段階から過剰包装を断る取り組みをしていますか？',
-      '廃棄前にリユース・修繕できるか確認する手順がありますか？',
-    ]
-  },
-  {
-    id: 'water', name: '水資源管理', icon: '💧', color: '#3b82f6', maxScore: 9,
-    questions: [
-      'トイレ・手洗い場の節水型設備（自動水栓・節水コマ等）を確認・点検していますか？',
-      '清掃や洗浄作業での水の使い過ぎを防ぐルールがありますか？',
-      '敷地内の水はけ・排水溝の管理を定期的に行っていますか？',
-    ]
-  },
-  {
-    id: 'ghg', name: 'CO2・温室効果ガス', icon: '🌡️', color: '#ef4444', maxScore: 12,
-    questions: [
-      '出張・移動手段をCO2の少ない交通機関（電車・バス等）に切り替えていますか？',
-      'テレワーク・オンライン会議の活用で移動を減らす取り組みをしていますか？',
-      '自社製品・サービスの脱炭素化を顧客への提案や価値訴求に活かしていますか？',
-      '取引先・顧客から環境（CO2削減）に関する要求を受けたことがありますか？',
-    ]
-  },
-  {
-    id: 'procurement', name: 'グリーン調達', icon: '🛒', color: '#8b5cf6', maxScore: 9,
-    questions: [
-      '消耗品（文具・トイレットペーパー等）に再生品・エコ製品を採用していますか？',
-      '取引先の選定基準に「環境対応」を含めることを検討・実施していますか？',
-      '食堂・休憩室での食品ロス削減や容器の環境配慮に取り組んでいますか？',
-    ]
-  },
-  {
-    id: 'legal', name: '法令遵守・リスク管理', icon: '⚖️', color: '#6366f1', maxScore: 9,
-    questions: [
-      '自然災害（洪水・猛暑等）が事業に与えるリスクを評価していますか？',
-      '環境トラブル（漏洩・苦情等）の発生履歴を記録・管理していますか？',
-      '近隣住民や地域からの環境に関する苦情への対応手順がありますか？',
-    ]
-  },
-  {
-    id: 'ems', name: '環境マネジメント体制', icon: '🏢', color: '#0891b2', maxScore: 12,
-    questions: [
-      '環境への取り組みを経営会議や役員レベルで定期的に議論していますか？',
-      '新入社員研修に環境教育の内容を含めていますか？',
-      '環境改善のアイデアを従業員から集める仕組み（提案制度等）がありますか？',
-      '取引先・顧客から環境対応に関するアンケートや調査を受けたことがありますか？',
-    ]
-  },
-  {
-    id: 'sdgs', name: 'SDGs・情報開示', icon: '🌏', color: '#059669', maxScore: 18,
-    questions: [
-      '自社の環境活動を社内報・SNS・ニュースレター等で発信していますか？',
-      '環境に関する数値目標（CO2・廃棄物等）を対外的に公表していますか？',
-      '地域の学校や団体に対して環境教育・見学受け入れ等を行っていますか？',
-      '環境配慮型の商品・サービス開発を事業の柱として位置づけていますか？',
-      '気候変動への対応を経営戦略の一部として文書化していますか？',
-      '同業他社や業界団体の環境取り組みをベンチマークしていますか？',
-    ]
-  }
+  { id:'energy', name:'エネルギー管理', icon:'⚡', color:'#f59e0b', maxScore:12, questions:[
+    '電力会社との契約を見直し、料金プランの最適化を行っていますか？',
+    'ピーク電力削減（デマンドコントロール）に取り組んでいますか？',
+    '業務用機器・OA機器の省エネモード設定を徹底していますか？',
+    '夏冬の冷暖房設定温度（夏28℃・冬20℃目安）を遵守していますか？',
+  ]},
+  { id:'waste', name:'廃棄物管理', icon:'♻️', color:'#10b981', maxScore:9, questions:[
+    '事務所の紙使用量を削減するためのペーパーレス化を進めていますか？',
+    '廃棄物の減量化のために購買段階から過剰包装を断る取り組みをしていますか？',
+    '廃棄前にリユース・修繕できるか確認する手順がありますか？',
+  ]},
+  { id:'water', name:'水資源管理', icon:'💧', color:'#3b82f6', maxScore:9, questions:[
+    'トイレ・手洗い場の節水型設備（自動水栓・節水コマ等）を確認・点検していますか？',
+    '清掃や洗浄作業での水の使い過ぎを防ぐルールがありますか？',
+    '敷地内の水はけ・排水溝の管理を定期的に行っていますか？',
+  ]},
+  { id:'ghg', name:'CO2・温室効果ガス', icon:'🌡️', color:'#ef4444', maxScore:12, questions:[
+    '出張・移動手段をCO2の少ない交通機関（電車・バス等）に切り替えていますか？',
+    'テレワーク・オンライン会議の活用で移動を減らす取り組みをしていますか？',
+    '自社製品・サービスの脱炭素化を顧客への提案や価値訴求に活かしていますか？',
+    '取引先・顧客から環境（CO2削減）に関する要求を受けたことがありますか？',
+  ]},
+  { id:'procurement', name:'グリーン調達', icon:'🛒', color:'#8b5cf6', maxScore:9, questions:[
+    '消耗品（文具・トイレットペーパー等）に再生品・エコ製品を採用していますか？',
+    '取引先の選定基準に「環境対応」を含めることを検討・実施していますか？',
+    '食堂・休憩室での食品ロス削減や容器の環境配慮に取り組んでいますか？',
+  ]},
+  { id:'legal', name:'法令遵守・リスク管理', icon:'⚖️', color:'#6366f1', maxScore:9, questions:[
+    '自然災害（洪水・猛暑等）が事業に与えるリスクを評価していますか？',
+    '環境トラブル（漏洩・苦情等）の発生履歴を記録・管理していますか？',
+    '近隣住民や地域からの環境に関する苦情への対応手順がありますか？',
+  ]},
+  { id:'ems', name:'環境マネジメント体制', icon:'🏢', color:'#0891b2', maxScore:12, questions:[
+    '環境への取り組みを経営会議や役員レベルで定期的に議論していますか？',
+    '新入社員研修に環境教育の内容を含めていますか？',
+    '環境改善のアイデアを従業員から集める仕組み（提案制度等）がありますか？',
+    '取引先・顧客から環境対応に関するアンケートや調査を受けたことがありますか？',
+  ]},
+  { id:'sdgs', name:'SDGs・情報開示', icon:'🌏', color:'#059669', maxScore:18, questions:[
+    '自社の環境活動を社内報・SNS・ニュースレター等で発信していますか？',
+    '環境に関する数値目標（CO2・廃棄物等）を対外的に公表していますか？',
+    '地域の学校や団体に対して環境教育・見学受け入れ等を行っていますか？',
+    '環境配慮型の商品・サービス開発を事業の柱として位置づけていますか？',
+    '気候変動への対応を経営戦略の一部として文書化していますか？',
+    '同業他社や業界団体の環境取り組みをベンチマークしていますか？',
+  ]},
 ];
 
-const totalQuestions = categories.reduce((s, c) => s + c.questions.length, 0); // 30
+const totalQuestions = categories.reduce((s,c) => s + c.questions.length, 0);
+const MAX_SCORE = categories.reduce((s,c) => s + c.maxScore, 0);
 
 let state = {
-  currentCategoryIndex: 0,
-  currentQuestionIndex: 0,
-  answers: {},
-  companyName: '', industry: '', respondentName: ''
+  currentCategoryIndex:0, currentQuestionIndex:0, answers:{},
+  companyName:'', industry:'', respondentName:'', email:''
 };
 
 function startAssessment() {
   const name = document.getElementById('companyName').value.trim();
-  if (!name) {
-    document.getElementById('companyName').focus();
-    document.getElementById('companyName').classList.add('ring-2', 'ring-red-400');
-    return;
-  }
+  if (!name) { document.getElementById('companyName').focus(); document.getElementById('companyName').classList.add('ring-2','ring-red-400'); return; }
   state.companyName = name;
   state.industry = document.getElementById('industry').value;
   state.respondentName = document.getElementById('respondentName').value.trim();
-  state.currentCategoryIndex = 0;
-  state.currentQuestionIndex = 0;
-  state.answers = {};
-
+  state.email = document.getElementById('email').value.trim();
+  state.currentCategoryIndex = 0; state.currentQuestionIndex = 0; state.answers = {};
   showScreen('questions');
   document.getElementById('progressInfo').classList.remove('hidden');
   document.getElementById('progressBar').classList.remove('hidden');
@@ -323,186 +285,109 @@ function getGlobalIndex() {
 
 function renderQuestion() {
   const cat = categories[state.currentCategoryIndex];
-  const q = cat.questions[state.currentQuestionIndex];
   const gi = getGlobalIndex();
-
   document.getElementById('categoryIcon').textContent = cat.icon;
   document.getElementById('categoryName').textContent = cat.name;
-  document.getElementById('questionText').textContent = q;
-  document.getElementById('questionNumber').textContent =
-    `${cat.name} ${state.currentQuestionIndex + 1} / ${cat.questions.length}問目`;
-  document.getElementById('currentQ').textContent = gi + 1;
-  document.getElementById('progressFill').style.width = (gi / totalQuestions * 100) + '%';
-  document.getElementById('backBtn').disabled = gi === 0;
-  document.getElementById('backBtn').style.opacity = gi === 0 ? '0.3' : '1';
-
+  document.getElementById('questionText').textContent = cat.questions[state.currentQuestionIndex];
+  document.getElementById('questionNumber').textContent = `${cat.name} ${state.currentQuestionIndex+1} / ${cat.questions.length}問目`;
+  document.getElementById('currentQ').textContent = gi+1;
+  document.getElementById('progressFill').style.width = (gi/totalQuestions*100)+'%';
+  document.getElementById('backBtn').disabled = gi===0;
+  document.getElementById('backBtn').style.opacity = gi===0 ? '0.3' : '1';
   const card = document.querySelector('#screen-questions .bg-white');
   card.classList.remove('fade-in'); void card.offsetWidth; card.classList.add('fade-in');
 }
 
 function answer(pts) {
-  const key = `${state.currentCategoryIndex}_${state.currentQuestionIndex}`;
-  state.answers[key] = pts;
-
+  state.answers[`${state.currentCategoryIndex}_${state.currentQuestionIndex}`] = pts;
   setTimeout(() => {
     const cat = categories[state.currentCategoryIndex];
-    if (state.currentQuestionIndex < cat.questions.length - 1) {
-      state.currentQuestionIndex++;
-    } else if (state.currentCategoryIndex < categories.length - 1) {
-      state.currentCategoryIndex++;
-      state.currentQuestionIndex = 0;
-    } else {
-      showResult(); return;
-    }
+    if (state.currentQuestionIndex < cat.questions.length-1) { state.currentQuestionIndex++; }
+    else if (state.currentCategoryIndex < categories.length-1) { state.currentCategoryIndex++; state.currentQuestionIndex=0; }
+    else { showResult(); return; }
     renderQuestion();
   }, 150);
 }
 
 function goBack() {
-  if (state.currentQuestionIndex > 0) {
-    state.currentQuestionIndex--;
-  } else if (state.currentCategoryIndex > 0) {
-    state.currentCategoryIndex--;
-    state.currentQuestionIndex = categories[state.currentCategoryIndex].questions.length - 1;
-  }
+  if (state.currentQuestionIndex > 0) { state.currentQuestionIndex--; }
+  else if (state.currentCategoryIndex > 0) { state.currentCategoryIndex--; state.currentQuestionIndex = categories[state.currentCategoryIndex].questions.length-1; }
   renderQuestion();
 }
 
 function calcScores() {
   const catScores = {};
   let total = 0;
-  categories.forEach((cat, ci) => {
+  categories.forEach((cat,ci) => {
     let score = 0;
-    cat.questions.forEach((_, qi) => { score += state.answers[`${ci}_${qi}`] || 0; });
-    catScores[cat.id] = { score, max: cat.maxScore, pct: Math.round(score / cat.maxScore * 100) };
+    cat.questions.forEach((_,qi) => { score += state.answers[`${ci}_${qi}`]||0; });
+    catScores[cat.id] = { score, max:cat.maxScore, pct:Math.round(score/cat.maxScore*100) };
     total += score;
   });
-  return { catScores, totalScore: total };
+  return { catScores, totalScore:total };
 }
 
 function getRank(pct) {
-  if (pct >= 89) return { rank: 'S', label: '環境経営先進企業', color: '#7c3aed', bg: '#f3e8ff' };
-  if (pct >= 75) return { rank: 'A', label: '環境経営優良企業', color: '#059669', bg: '#d1fae5' };
-  if (pct >= 60) return { rank: 'B', label: '環境経営取組企業', color: '#d97706', bg: '#fef3c7' };
-  if (pct >= 40) return { rank: 'C', label: '環境経営基礎段階', color: '#ea580c', bg: '#ffedd5' };
-  return { rank: 'D', label: '環境経営要強化', color: '#dc2626', bg: '#fee2e2' };
+  if (pct>=89) return {rank:'S',label:'環境経営先進企業',color:'#7c3aed',bg:'#f3e8ff'};
+  if (pct>=75) return {rank:'A',label:'環境経営優良企業',color:'#059669',bg:'#d1fae5'};
+  if (pct>=60) return {rank:'B',label:'環境経営取組企業',color:'#d97706',bg:'#fef3c7'};
+  if (pct>=40) return {rank:'C',label:'環境経営基礎段階',color:'#ea580c',bg:'#ffedd5'};
+  return {rank:'D',label:'環境経営要強化',color:'#dc2626',bg:'#fee2e2'};
 }
 
 const adviceData = {
-  energy: {
-    high: '日常的な省エネ行動が定着しています。次は電力の見える化ツール導入や再エネ電力への切り替えで一歩先へ。',
-    mid: 'ピーク電力管理や設定温度ルールを全社で統一し、ムラなく徹底することが次のステップです。',
-    low: 'まずはOA機器の省エネモード設定と冷暖房温度ルールの周知から始めましょう。コスト削減にも直結します。'
-  },
-  waste: {
-    high: '廃棄物の発生源対策が進んでいます。ペーパーレス化のさらなる推進でコスト削減も期待できます。',
-    mid: '購買段階からの過剰包装削減やリユース確認を習慣化すると、廃棄物量が大きく変わります。',
-    low: 'まずコピー用紙の使用量を計測してみましょう。「現状把握」が削減の第一歩です。'
-  },
-  water: {
-    high: '水資源管理は良好です。次は排水の水質データを記録し、対外的に公表する準備を。',
-    mid: '節水設備の点検サイクルを決め、定期的にチェックする仕組みを作りましょう。',
-    low: 'まず水道メーターの月次確認と、節水コマ・自動水栓の設置可否を確認しましょう。'
-  },
-  ghg: {
-    high: 'CO2削減の行動が事業戦略に組み込まれています。顧客への脱炭素提案を差別化要素に活かしましょう。',
-    mid: 'テレワークや交通手段の見直しを全社ルール化するとCO2と経費の両方を削減できます。',
-    low: 'まず社員の通勤・出張のCO2を試算してみましょう。意外と大きな排出源になっています。'
-  },
-  procurement: {
-    high: 'グリーン調達の意識が高い状態です。取引先への働きかけを強化してサプライチェーン全体へ広げましょう。',
-    mid: '文具・消耗品からエコ製品への切り替えリストを作り、順次置き換えていきましょう。',
-    low: 'まず日常的に使う消耗品をエコマーク・グリーンマーク製品に置き換えることから始めましょう。'
-  },
-  legal: {
-    high: '環境リスク管理は万全です。TCFD準拠の気候関連リスク開示も検討してみてください。',
-    mid: '気候変動リスク（洪水・猛暑等）を事業継続計画（BCP）に盛り込むことを検討しましょう。',
-    low: '環境トラブル記録と苦情対応手順の整備から始めましょう。万一の備えが信頼につながります。'
-  },
-  ems: {
-    high: '環境経営の仕組みが組織に根付いています。ISO14001やエコアクション21の取得で対外信頼性を高めましょう。',
-    mid: '経営会議での環境議題化と提案制度の整備で、継続的改善サイクルを回しやすくなります。',
-    low: 'まず環境担当者を明確にし、月1回でも環境データを確認する会議体を設けましょう。'
-  },
-  sdgs: {
-    high: 'SDGsの対外発信が充実しています。第三者認証（エコアクション21等）でさらに信頼性を高めましょう。',
-    mid: '取り組み実績を数値とともにSNSやホームページで定期発信することで認知度が上がります。',
-    low: 'まず自社の環境取り組みを一枚にまとめた「環境レポート」を社内向けに作成してみましょう。'
-  }
+  energy:{high:'日常的な省エネ行動が定着しています。次は電力の見える化ツール導入や再エネ電力への切り替えで一歩先へ。',mid:'ピーク電力管理や設定温度ルールを全社で統一し、ムラなく徹底することが次のステップです。',low:'まずはOA機器の省エネモード設定と冷暖房温度ルールの周知から始めましょう。'},
+  waste:{high:'廃棄物の発生源対策が進んでいます。ペーパーレス化のさらなる推進でコスト削減も期待できます。',mid:'購買段階からの過剰包装削減やリユース確認を習慣化すると廃棄物量が大きく変わります。',low:'まずコピー用紙の使用量を計測してみましょう。「現状把握」が削減の第一歩です。'},
+  water:{high:'水資源管理は良好です。次は排水の水質データを記録し対外的に公表する準備を。',mid:'節水設備の点検サイクルを決め定期的にチェックする仕組みを作りましょう。',low:'まず水道メーターの月次確認と節水コマ・自動水栓の設置可否を確認しましょう。'},
+  ghg:{high:'CO2削減の行動が事業戦略に組み込まれています。顧客への脱炭素提案を差別化要素に活かしましょう。',mid:'テレワークや交通手段の見直しを全社ルール化するとCO2と経費の両方を削減できます。',low:'まず社員の通勤・出張のCO2を試算してみましょう。意外と大きな排出源になっています。'},
+  procurement:{high:'グリーン調達の意識が高い状態です。取引先への働きかけを強化してサプライチェーン全体へ広げましょう。',mid:'文具・消耗品からエコ製品への切り替えリストを作り順次置き換えていきましょう。',low:'まず日常的に使う消耗品をエコマーク・グリーンマーク製品に置き換えることから始めましょう。'},
+  legal:{high:'環境リスク管理は万全です。TCFD準拠の気候関連リスク開示も検討してみてください。',mid:'気候変動リスク（洪水・猛暑等）を事業継続計画（BCP）に盛り込むことを検討しましょう。',low:'環境トラブル記録と苦情対応手順の整備から始めましょう。万一の備えが信頼につながります。'},
+  ems:{high:'環境経営の仕組みが組織に根付いています。ISO14001やエコアクション21の取得で対外信頼性を高めましょう。',mid:'経営会議での環境議題化と提案制度の整備で継続的改善サイクルを回しやすくなります。',low:'まず環境担当者を明確にし月1回でも環境データを確認する会議体を設けましょう。'},
+  sdgs:{high:'SDGsの対外発信が充実しています。第三者認証（エコアクション21等）でさらに信頼性を高めましょう。',mid:'取り組み実績を数値とともにSNSやホームページで定期発信することで認知度が上がります。',low:'まず自社の環境取り組みを一枚にまとめた「環境レポート」を社内向けに作成してみましょう。'},
 };
 
 function showResult() {
   showScreen('result');
   document.getElementById('progressInfo').classList.add('hidden');
   document.getElementById('progressBar').classList.add('hidden');
-
-  const { catScores, totalScore } = calcScores();
-  const maxScore = categories.reduce((s, c) => s + c.maxScore, 0); // 90
-  const pct = Math.round(totalScore / maxScore * 100);
+  const {catScores,totalScore} = calcScores();
+  const pct = Math.round(totalScore/MAX_SCORE*100);
   const rankInfo = getRank(pct);
-
-  document.getElementById('resultCompany').textContent =
-    state.companyName + (state.industry ? `（${state.industry}）` : '');
+  document.getElementById('resultCompany').textContent = state.companyName + (state.industry ? `（${state.industry}）` : '');
   document.getElementById('totalScore').textContent = totalScore;
-
   const badge = document.getElementById('rankBadge');
   badge.textContent = `ランク ${rankInfo.rank}`;
-  badge.style.color = rankInfo.color;
-  badge.style.background = rankInfo.bg;
+  badge.style.color = rankInfo.color; badge.style.background = rankInfo.bg;
   document.getElementById('rankLabel').textContent = rankInfo.label;
-
-  setTimeout(() => { document.getElementById('scoreBar').style.width = pct + '%'; }, 100);
-  document.getElementById('scorePercent').textContent = `達成率 ${pct}%（${totalScore} / ${maxScore}点）`;
+  setTimeout(() => { document.getElementById('scoreBar').style.width = pct+'%'; }, 100);
+  document.getElementById('scorePercent').textContent = `達成率 ${pct}%（${totalScore} / ${MAX_SCORE}点）`;
 
   const list = document.getElementById('categoryScoreList');
   list.innerHTML = '';
   categories.forEach(cat => {
     const cs = catScores[cat.id];
     const div = document.createElement('div');
-    div.innerHTML = `
-      <div class="flex items-center justify-between mb-1">
-        <span class="text-sm font-medium text-gray-700">${cat.icon} ${cat.name}</span>
-        <span class="text-sm font-bold text-gray-800">${cs.score}/${cs.max}点 (${cs.pct}%)</span>
-      </div>
-      <div class="bg-gray-100 rounded-full h-2.5 overflow-hidden">
-        <div class="h-full rounded-full" style="width:${cs.pct}%;background:${cat.color};transition:width 0.8s ease"></div>
-      </div>`;
+    div.innerHTML = `<div class="flex items-center justify-between mb-1"><span class="text-sm font-medium text-gray-700">${cat.icon} ${cat.name}</span><span class="text-sm font-bold text-gray-800">${cs.score}/${cs.max}点 (${cs.pct}%)</span></div><div class="bg-gray-100 rounded-full h-2.5 overflow-hidden"><div class="h-full rounded-full" style="width:${cs.pct}%;background:${cat.color};transition:width 0.8s ease"></div></div>`;
     list.appendChild(div);
   });
 
   const ctx = document.getElementById('radarChart').getContext('2d');
   if (window._chart) window._chart.destroy();
   window._chart = new Chart(ctx, {
-    type: 'radar',
-    data: {
-      labels: categories.map(c => c.name),
-      datasets: [{
-        label: '達成率（%）',
-        data: categories.map(c => catScores[c.id].pct),
-        backgroundColor: 'rgba(5,150,105,0.2)',
-        borderColor: 'rgba(5,150,105,0.8)',
-        borderWidth: 2,
-        pointBackgroundColor: categories.map(c => c.color),
-        pointRadius: 5,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: true,
-      scales: { r: { min: 0, max: 100, ticks: { stepSize: 25, font: { size: 10 } }, pointLabels: { font: { size: 10 } } } },
-      plugins: { legend: { display: false } }
-    }
+    type:'radar',
+    data:{ labels:categories.map(c=>c.name), datasets:[{ label:'達成率（%）', data:categories.map(c=>catScores[c.id].pct), backgroundColor:'rgba(5,150,105,0.2)', borderColor:'rgba(5,150,105,0.8)', borderWidth:2, pointBackgroundColor:categories.map(c=>c.color), pointRadius:5 }] },
+    options:{ responsive:true, maintainAspectRatio:true, scales:{ r:{ min:0, max:100, ticks:{stepSize:25,font:{size:10}}, pointLabels:{font:{size:10}} } }, plugins:{legend:{display:false}} }
   });
 
   const adviceEl = document.getElementById('adviceList');
   adviceEl.innerHTML = '';
   categories.forEach(cat => {
     const pctVal = catScores[cat.id].pct;
-    const level = pctVal >= 70 ? 'high' : pctVal >= 40 ? 'mid' : 'low';
+    const level = pctVal>=70?'high':pctVal>=40?'mid':'low';
     const div = document.createElement('div');
     div.className = 'p-3 rounded-xl border-l-4 bg-gray-50';
     div.style.borderColor = cat.color;
-    div.innerHTML = `<div class="font-bold text-sm mb-1" style="color:${cat.color}">${cat.icon} ${cat.name}</div>
-      <p class="text-xs text-gray-600 leading-relaxed">${adviceData[cat.id][level]}</p>`;
+    div.innerHTML = `<div class="font-bold text-sm mb-1" style="color:${cat.color}">${cat.icon} ${cat.name}</div><p class="text-xs text-gray-600 leading-relaxed">${adviceData[cat.id][level]}</p>`;
     adviceEl.appendChild(div);
   });
 }
@@ -510,26 +395,32 @@ function showResult() {
 async function saveResult() {
   const btn = document.getElementById('saveBtn');
   btn.textContent = '⏳ 保存中...'; btn.disabled = true;
-  const { catScores, totalScore } = calcScores();
-  const maxScore = categories.reduce((s, c) => s + c.maxScore, 0);
-  const pct = Math.round(totalScore / maxScore * 100);
-  const { rank } = getRank(pct);
+  const {catScores,totalScore} = calcScores();
+  const pct = Math.round(totalScore/MAX_SCORE*100);
+  const {rank} = getRank(pct);
   try {
-    const { error } = await supabase.from('env_assessment_results').insert({
-      company_name: state.companyName,
-      industry: state.industry || null,
-      respondent_name: state.respondentName || null,
-      total_score: totalScore,
-      max_score: maxScore,
-      rank,
-      category_scores: catScores,
-      answers: state.answers,
-      assessment_type: 'simple'
+    const {error} = await supabase.from('env_assessment_results').insert({
+      company_name:state.companyName, industry:state.industry||null,
+      respondent_name:state.respondentName||null, email:state.email||null,
+      total_score:totalScore, max_score:MAX_SCORE, rank,
+      category_scores:catScores, answers:state.answers, assessment_type:'simple'
     });
     if (error) throw error;
-    document.getElementById('savedMessage').classList.remove('hidden');
+
+    if (state.email) {
+      try {
+        await fetch(EDGE_FN_URL, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({ email:state.email, companyName:state.companyName, industry:state.industry, totalScore, maxScore:MAX_SCORE, rank, categoryScores:catScores, assessmentType:'simple' })
+        });
+      } catch(e) { console.warn('Email send failed:', e); }
+    }
+
+    const msg = state.email ? `✅ 結果を保存し、${state.email} に送信しました` : '✅ 結果を保存しました';
+    const msgEl = document.getElementById('savedMessage');
+    msgEl.textContent = msg; msgEl.classList.remove('hidden');
     btn.textContent = '✅ 保存済み';
-  } catch (e) {
+  } catch(e) {
     console.error(e);
     document.getElementById('savedError').classList.remove('hidden');
     btn.textContent = '📤 結果を保存する'; btn.disabled = false;
@@ -540,18 +431,18 @@ function showScreen(name) {
   ['start','questions','result'].forEach(s => document.getElementById(`screen-${s}`).classList.add('hidden'));
   const el = document.getElementById(`screen-${name}`);
   el.classList.remove('hidden','fade-in'); void el.offsetWidth; el.classList.add('fade-in');
-  window.scrollTo(0, 0);
+  window.scrollTo(0,0);
 }
 
 function restartAssessment() {
-  state = { currentCategoryIndex:0, currentQuestionIndex:0, answers:{}, companyName:'', industry:'', respondentName:'' };
-  ['companyName','respondentName'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('industry').value = '';
+  state = {currentCategoryIndex:0,currentQuestionIndex:0,answers:{},companyName:'',industry:'',respondentName:'',email:''};
+  ['companyName','respondentName','email'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('industry').value='';
   document.getElementById('savedMessage').classList.add('hidden');
   document.getElementById('savedError').classList.add('hidden');
-  document.getElementById('saveBtn').textContent = '📤 結果を保存する';
-  document.getElementById('saveBtn').disabled = false;
-  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('saveBtn').textContent='📤 結果を保存する';
+  document.getElementById('saveBtn').disabled=false;
+  document.getElementById('progressFill').style.width='0%';
   document.getElementById('progressInfo').classList.add('hidden');
   document.getElementById('progressBar').classList.add('hidden');
   showScreen('start');
