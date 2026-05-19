@@ -210,7 +210,7 @@
 // Supabase初期化
 const SUPABASE_URL = 'https://qyepcsprvdocyjiyqmiv.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5ZXBjc3BydmRvY3lqaXlxbWl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MzEwODYsImV4cCI6MjA5NDIwNzA4Nn0.ijErc-4sW2NXCNn3ZjZsxQbSOEZaqkIAuoMyklgXkkA';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // 質問データ
 const categories = [
@@ -638,7 +638,7 @@ async function saveResult() {
   const { rank } = getRank(pct);
 
   try {
-    const { error } = await supabase.from('env_assessment_results').insert({
+    const { error } = await db.from('env_assessment_results').insert({
       company_name: state.companyName,
       industry: state.industry || null,
       respondent_name: state.respondentName || null,
