@@ -3,25 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>環境経営診断 管理ダッシュボード</title>
+<title>環境診断 管理ダッシュボード</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; }
-  .gradient-bg { background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%); }
+  .gradient-corp { background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%); }
+  .gradient-ind  { background: linear-gradient(135deg, #1e3a5f 0%, #1d4ed8 50%, #0284c7 100%); }
   .fade-in { animation: fadeIn 0.4s ease; }
   @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
   .stat-card { transition: transform 0.15s; }
   .stat-card:hover { transform: translateY(-2px); }
   th { cursor: pointer; user-select: none; }
-  th:hover { background: #065f46 !important; }
   tr:hover td { background: #f0fdf4; }
   .rank-S { background:#f3e8ff; color:#7c3aed; }
   .rank-A { background:#d1fae5; color:#059669; }
   .rank-B { background:#fef3c7; color:#d97706; }
   .rank-C { background:#ffedd5; color:#ea580c; }
   .rank-D { background:#fee2e2; color:#dc2626; }
+  .tab-active-corp { background:#047857; color:white; }
+  .tab-active-ind  { background:#1d4ed8; color:white; }
+  .tab-inactive { background:white; color:#6b7280; }
 </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -31,9 +34,9 @@
   <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-sm text-center">
     <div class="text-5xl mb-4">🌿</div>
     <h1 class="text-xl font-bold text-gray-800 mb-1">管理ダッシュボード</h1>
-    <p class="text-gray-400 text-sm mb-6">環境経営診断 管理者専用</p>
+    <p class="text-gray-400 text-sm mb-6">環境診断 管理者専用</p>
     <input id="pwInput" type="password" placeholder="パスワードを入力" class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-green-400" onkeydown="if(event.key==='Enter')login()">
-    <button onclick="login()" class="w-full gradient-bg text-white font-bold py-3 rounded-xl hover:opacity-90 transition">ログイン</button>
+    <button onclick="login()" class="w-full gradient-corp text-white font-bold py-3 rounded-xl hover:opacity-90 transition">ログイン</button>
     <p id="loginErr" class="text-red-500 text-xs mt-2 hidden">パスワードが違います</p>
   </div>
 </div>
@@ -42,12 +45,12 @@
 <div id="dashboard" class="hidden">
 
   <!-- ヘッダー -->
-  <header class="gradient-bg text-white py-4 px-6 shadow-lg">
+  <header id="mainHeader" class="gradient-corp text-white py-4 px-6 shadow-lg transition-all duration-300">
     <div class="max-w-7xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <span class="text-2xl">🌿</span>
+        <span id="headerIcon" class="text-2xl">🌿</span>
         <div>
-          <div class="font-bold text-lg">環境経営診断 管理ダッシュボード</div>
+          <div id="headerTitle" class="font-bold text-lg">環境経営診断 管理ダッシュボード</div>
           <div class="text-xs opacity-70" id="lastUpdated"></div>
         </div>
       </div>
@@ -57,6 +60,20 @@
       </div>
     </div>
   </header>
+
+  <!-- タブ切り替え -->
+  <div class="bg-white border-b border-gray-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 flex gap-1 pt-3 pb-0">
+      <button id="tabCorp" onclick="switchTab('corporate')"
+        class="tab-active-corp px-6 py-2.5 rounded-t-xl text-sm font-bold transition">
+        🏢 法人版
+      </button>
+      <button id="tabInd" onclick="switchTab('individual')"
+        class="tab-inactive px-6 py-2.5 rounded-t-xl text-sm font-bold transition border border-gray-200">
+        🌱 個人版
+      </button>
+    </div>
+  </div>
 
   <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
 
@@ -88,39 +105,27 @@
 
     <!-- チャートエリア -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-      <!-- レーダーチャート -->
       <div class="bg-white rounded-2xl shadow p-5">
         <h2 class="font-bold text-gray-700 mb-1">カテゴリ別 平均達成率</h2>
         <p class="text-xs text-gray-400 mb-4">絞り込み中の回答の平均値</p>
-        <div style="max-height:300px;">
-          <canvas id="radarChart"></canvas>
-        </div>
+        <div style="max-height:300px;"><canvas id="radarChart"></canvas></div>
       </div>
-
-      <!-- ランク分布 -->
       <div class="bg-white rounded-2xl shadow p-5">
         <h2 class="font-bold text-gray-700 mb-1">ランク分布</h2>
         <p class="text-xs text-gray-400 mb-4">絞り込み中の回答のランク内訳</p>
-        <div style="max-height:300px;">
-          <canvas id="rankChart"></canvas>
-        </div>
+        <div style="max-height:300px;"><canvas id="rankChart"></canvas></div>
       </div>
-
-      <!-- スコア推移 -->
       <div class="bg-white rounded-2xl shadow p-5 md:col-span-2">
         <h2 class="font-bold text-gray-700 mb-1">回答数・平均スコア推移</h2>
         <p class="text-xs text-gray-400 mb-4">日別の回答数と達成率の推移</p>
-        <div style="max-height:200px;">
-          <canvas id="trendChart"></canvas>
-        </div>
+        <div style="max-height:200px;"><canvas id="trendChart"></canvas></div>
       </div>
     </div>
 
-    <!-- 業種別平均 -->
+    <!-- 業種別/属性別平均 -->
     <div class="bg-white rounded-2xl shadow p-5">
-      <h2 class="font-bold text-gray-700 mb-4">業種別 平均達成率</h2>
-      <div id="industryStats" class="space-y-3"></div>
+      <h2 id="groupStatsTitle" class="font-bold text-gray-700 mb-4">業種別 平均達成率</h2>
+      <div id="groupStats" class="space-y-3"></div>
     </div>
 
     <!-- 回答一覧テーブル -->
@@ -131,11 +136,11 @@
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
-          <thead>
+          <thead id="tableHead">
             <tr class="bg-gray-700 text-white text-xs">
               <th class="px-4 py-3 text-left" onclick="sortTable('created_at')">日時 ↕</th>
-              <th class="px-4 py-3 text-left" onclick="sortTable('company_name')">会社名 ↕</th>
-              <th class="px-4 py-3 text-left">業種</th>
+              <th class="px-4 py-3 text-left" id="colName" onclick="sortTable('company_name')">会社名 ↕</th>
+              <th class="px-4 py-3 text-left" id="colGroup">業種</th>
               <th class="px-4 py-3 text-center">診断種別</th>
               <th class="px-4 py-3 text-center" onclick="sortTable('rank')">ランク ↕</th>
               <th class="px-4 py-3 text-center" onclick="sortTable('pct')">達成率 ↕</th>
@@ -156,7 +161,7 @@
 <!-- 詳細モーダル -->
 <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="if(event.target===this)closeModal()">
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-screen overflow-y-auto">
-    <div class="gradient-bg text-white p-5 rounded-t-2xl">
+    <div id="modalHeader" class="gradient-corp text-white p-5 rounded-t-2xl">
       <div class="flex justify-between items-start">
         <div>
           <h3 id="modalCompany" class="font-bold text-lg"></h3>
@@ -182,12 +187,70 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const ADMIN_PASSWORD = 'kankyokei2024';
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const categoryNames = {
-  energy:'⚡ エネルギー管理', waste:'♻️ 廃棄物管理', water:'💧 水資源管理',
-  ghg:'🌡️ CO2・温室効果ガス', procurement:'🛒 グリーン調達',
-  legal:'⚖️ 法令遵守・リスク管理', ems:'🏢 環境マネジメント体制', sdgs:'🌏 SDGs・情報開示'
+const TAB_CONFIG = {
+  corporate: {
+    types: ['full', 'simple'],
+    typeValues: { full: '本診断(60問)', simple: 'お試し(30問)' },
+    filterTypeOptions: [
+      {value:'all', label:'すべての診断'},
+      {value:'simple', label:'お試し診断（30問）'},
+      {value:'full', label:'本診断（60問）'}
+    ],
+    categoryNames: {
+      energy:'⚡ エネルギー管理', waste:'♻️ 廃棄物管理', water:'💧 水資源管理',
+      ghg:'🌡️ CO2・温室効果ガス', procurement:'🛒 グリーン調達',
+      legal:'⚖️ 法令遵守・リスク管理', ems:'🏢 環境マネジメント体制', sdgs:'🌏 SDGs・情報開示'
+    },
+    radarBg: 'rgba(5,150,105,0.2)',
+    radarBorder: 'rgba(5,150,105,0.8)',
+    barColor: 'rgba(5,150,105,0.5)',
+    lineColor: '#f59e0b',
+    barFill: '#10b981',
+    headerClass: 'gradient-corp',
+    headerIcon: '🌿',
+    headerTitle: '環境経営診断 管理ダッシュボード',
+    tabActiveCls: 'tab-active-corp',
+    ringColor: 'focus:ring-green-400',
+    nameLabel: '会社名',
+    groupLabel: '業種',
+    groupStatsTitle: '業種別 平均達成率',
+    searchPlaceholder: '会社名で検索…',
+    stat4Label: '業種数',
+    stat4Sub: '回答あり',
+    statSubKey: (s,f) => `お試し ${s} / 本診断 ${f}`,
+  },
+  individual: {
+    types: ['behavior_full', 'behavior_simple'],
+    typeValues: { behavior_full: '本診断(60問)', behavior_simple: 'お試し(30問)' },
+    filterTypeOptions: [
+      {value:'all', label:'すべての診断'},
+      {value:'behavior_simple', label:'お試し診断（30問）'},
+      {value:'behavior_full', label:'本診断（60問）'}
+    ],
+    categoryNames: {
+      transport:'🚗 移動・交通', food:'🥗 食生活', energy:'💡 自宅エネルギー',
+      shopping:'🛍 消費・買い物', waste:'🗑 ごみ・リサイクル',
+      water:'💧 水・節水', digital:'📱 デジタル行動', social:'🤝 社会参加'
+    },
+    radarBg: 'rgba(37,99,235,0.2)',
+    radarBorder: 'rgba(37,99,235,0.8)',
+    barColor: 'rgba(37,99,235,0.5)',
+    lineColor: '#f59e0b',
+    barFill: '#3b82f6',
+    headerClass: 'gradient-ind',
+    headerIcon: '🌱',
+    headerTitle: '環境行動診断 管理ダッシュボード',
+    tabActiveCls: 'tab-active-ind',
+    ringColor: 'focus:ring-blue-400',
+    nameLabel: 'お名前',
+    groupLabel: '年代・属性',
+    groupStatsTitle: '属性別 平均達成率',
+    searchPlaceholder: '名前で検索…',
+    stat4Label: '属性数',
+    stat4Sub: '回答あり',
+    statSubKey: (s,f) => `お試し ${s} / 本診断 ${f}`,
+  }
 };
-const catColors = ['#f59e0b','#10b981','#3b82f6','#ef4444','#8b5cf6','#6366f1','#0891b2','#059669'];
 
 let allData = [];
 let filteredData = [];
@@ -196,6 +259,7 @@ let sortAsc = false;
 let currentPage = 1;
 const PAGE_SIZE = 20;
 let charts = {};
+let currentTab = 'corporate';
 
 function login() {
   const pw = document.getElementById('pwInput').value;
@@ -215,31 +279,64 @@ async function loadData() {
     .from('env_assessment_results')
     .select('*')
     .order('created_at', { ascending: false });
-
   if (error) { alert('データ取得失敗: ' + error.message); return; }
+  allData = (data || []).map(r => ({ ...r, pct: Math.round(r.total_score / r.max_score * 100) }));
+  document.getElementById('lastUpdated').textContent = '最終更新: ' + new Date().toLocaleString('ja-JP');
+  applyFilters();
+}
 
-  allData = (data || []).map(r => ({
-    ...r,
-    pct: Math.round(r.total_score / r.max_score * 100)
-  }));
+function switchTab(tab) {
+  currentTab = tab;
+  const cfg = TAB_CONFIG[tab];
 
-  document.getElementById('lastUpdated').textContent =
-    '最終更新: ' + new Date().toLocaleString('ja-JP');
+  // ヘッダー
+  document.getElementById('mainHeader').className = `${cfg.headerClass} text-white py-4 px-6 shadow-lg transition-all duration-300`;
+  document.getElementById('headerIcon').textContent = cfg.headerIcon;
+  document.getElementById('headerTitle').textContent = cfg.headerTitle;
 
+  // タブボタン
+  document.getElementById('tabCorp').className =
+    tab === 'corporate' ? 'tab-active-corp px-6 py-2.5 rounded-t-xl text-sm font-bold transition'
+                        : 'tab-inactive px-6 py-2.5 rounded-t-xl text-sm font-bold transition border border-gray-200';
+  document.getElementById('tabInd').className =
+    tab === 'individual' ? 'tab-active-ind px-6 py-2.5 rounded-t-xl text-sm font-bold transition'
+                         : 'tab-inactive px-6 py-2.5 rounded-t-xl text-sm font-bold transition border border-gray-200';
+
+  // フィルタードロップダウン更新
+  const sel = document.getElementById('filterType');
+  sel.innerHTML = cfg.filterTypeOptions.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+
+  // 業種フィルター表示切り替え
+  const indFilter = document.getElementById('filterIndustry');
+  indFilter.style.display = tab === 'corporate' ? '' : 'none';
+
+  // ラベル更新
+  document.getElementById('colName').textContent = cfg.nameLabel + ' ↕';
+  document.getElementById('colGroup').textContent = cfg.groupLabel;
+  document.getElementById('groupStatsTitle').textContent = cfg.groupStatsTitle;
+  document.getElementById('searchBox').placeholder = cfg.searchPlaceholder;
+
+  // モーダルヘッダー
+  document.getElementById('modalHeader').className = `${cfg.headerClass} text-white p-5 rounded-t-2xl`;
+
+  currentPage = 1;
   applyFilters();
 }
 
 function applyFilters() {
+  const cfg = TAB_CONFIG[currentTab];
   const type = document.getElementById('filterType').value;
   const industry = document.getElementById('filterIndustry').value;
   const rank = document.getElementById('filterRank').value;
   const search = document.getElementById('searchBox').value.trim().toLowerCase();
 
   filteredData = allData.filter(r => {
-    if (type !== 'all' && (r.assessment_type || 'full') !== type) return false;
-    if (industry !== 'all' && r.industry !== industry) return false;
+    const atype = r.assessment_type || 'full';
+    if (!cfg.types.includes(atype)) return false;
+    if (type !== 'all' && atype !== type) return false;
+    if (currentTab === 'corporate' && industry !== 'all' && r.industry !== industry) return false;
     if (rank !== 'all' && r.rank !== rank) return false;
-    if (search && !r.company_name.toLowerCase().includes(search)) return false;
+    if (search && !(r.company_name||'').toLowerCase().includes(search)) return false;
     return true;
   });
 
@@ -269,22 +366,26 @@ function sortAndRender() {
 function renderAll() {
   renderStats();
   renderCharts();
-  renderIndustryStats();
+  renderGroupStats();
   renderTable();
 }
 
 function renderStats() {
+  const cfg = TAB_CONFIG[currentTab];
   const total = filteredData.length;
   const avgPct = total ? Math.round(filteredData.reduce((s,r) => s+r.pct, 0) / total) : 0;
-  const simple = filteredData.filter(r => (r.assessment_type||'full') === 'simple').length;
-  const full = filteredData.filter(r => (r.assessment_type||'full') === 'full').length;
+  const simpleTypes = currentTab === 'corporate' ? ['simple'] : ['behavior_simple'];
+  const fullTypes   = currentTab === 'corporate' ? ['full']   : ['behavior_full'];
+  const simple = filteredData.filter(r => simpleTypes.includes(r.assessment_type||'full')).length;
+  const full   = filteredData.filter(r => fullTypes.includes(r.assessment_type||'full')).length;
   const topRank = ['S','A','B','C','D'].find(rk => filteredData.some(r => r.rank === rk)) || '-';
+  const groupCount = new Set(filteredData.map(r=>r.industry).filter(Boolean)).size;
 
   const cards = [
-    { label:'総回答数', value: total+'件', sub: `お試し ${simple} / 本診断 ${full}`, icon:'📊', color:'bg-blue-50 border-blue-200' },
+    { label:'総回答数', value: total+'件', sub: cfg.statSubKey(simple, full), icon:'📊', color:'bg-blue-50 border-blue-200' },
     { label:'平均達成率', value: avgPct+'%', sub: total ? `最高 ${Math.max(...filteredData.map(r=>r.pct))}% / 最低 ${Math.min(...filteredData.map(r=>r.pct))}%` : '-', icon:'📈', color:'bg-green-50 border-green-200' },
-    { label:'最多ランク', value: `ランク ${topRank}`, sub: topRank !== '-' ? `${filteredData.filter(r=>r.rank===topRank).length}社` : '', icon:'🏆', color:'bg-yellow-50 border-yellow-200' },
-    { label:'業種数', value: new Set(filteredData.map(r=>r.industry).filter(Boolean)).size+'業種', sub: '回答あり', icon:'🏭', color:'bg-purple-50 border-purple-200' },
+    { label:'最多ランク', value: `ランク ${topRank}`, sub: topRank !== '-' ? `${filteredData.filter(r=>r.rank===topRank).length}件` : '', icon:'🏆', color:'bg-yellow-50 border-yellow-200' },
+    { label: cfg.stat4Label, value: groupCount + (currentTab==='corporate'?'業種':'属性'), sub: cfg.stat4Sub, icon: currentTab==='corporate'?'🏭':'👤', color:'bg-purple-50 border-purple-200' },
   ];
 
   document.getElementById('statsCards').innerHTML = cards.map(c => `
@@ -301,10 +402,10 @@ function renderStats() {
 }
 
 function renderCharts() {
+  const cfg = TAB_CONFIG[currentTab];
   if (!filteredData.length) return;
 
-  // レーダーチャート（カテゴリ別平均）
-  const catIds = Object.keys(categoryNames);
+  const catIds = Object.keys(cfg.categoryNames);
   const avgByCategory = catIds.map(id => {
     const vals = filteredData.map(r => r.category_scores?.[id]?.pct || 0);
     return vals.length ? Math.round(vals.reduce((s,v)=>s+v,0)/vals.length) : 0;
@@ -314,17 +415,16 @@ function renderCharts() {
   charts.radar = new Chart(document.getElementById('radarChart').getContext('2d'), {
     type: 'radar',
     data: {
-      labels: catIds.map(id => categoryNames[id]),
+      labels: catIds.map(id => cfg.categoryNames[id]),
       datasets: [{ label:'平均達成率(%)', data: avgByCategory,
-        backgroundColor:'rgba(5,150,105,0.2)', borderColor:'rgba(5,150,105,0.8)',
-        borderWidth:2, pointBackgroundColor: catColors, pointRadius:5 }]
+        backgroundColor: cfg.radarBg, borderColor: cfg.radarBorder,
+        borderWidth:2, pointRadius:5 }]
     },
     options: { responsive:true, maintainAspectRatio:true,
       scales:{ r:{ min:0, max:100, ticks:{stepSize:25,font:{size:10}}, pointLabels:{font:{size:10}} } },
       plugins:{legend:{display:false}} }
   });
 
-  // ランク分布
   const rankCounts = {S:0,A:0,B:0,C:0,D:0};
   filteredData.forEach(r => { if (rankCounts[r.rank] !== undefined) rankCounts[r.rank]++; });
   if (charts.rank) charts.rank.destroy();
@@ -340,7 +440,6 @@ function renderCharts() {
       plugins:{ legend:{ position:'right', labels:{font:{size:11}} } } }
   });
 
-  // 推移チャート（日別）
   const byDate = {};
   filteredData.forEach(r => {
     const d = r.created_at?.slice(0,10);
@@ -356,9 +455,9 @@ function renderCharts() {
     data: {
       labels: dates,
       datasets: [
-        { label:'回答数', data: dates.map(d=>byDate[d].count), backgroundColor:'rgba(5,150,105,0.5)', yAxisID:'y' },
+        { label:'回答数', data: dates.map(d=>byDate[d].count), backgroundColor: cfg.barColor, yAxisID:'y' },
         { label:'平均達成率(%)', data: dates.map(d=>Math.round(byDate[d].pctSum/byDate[d].count)),
-          type:'line', borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,0.1)',
+          type:'line', borderColor: cfg.lineColor, backgroundColor:'rgba(245,158,11,0.1)',
           borderWidth:2, pointRadius:4, tension:0.3, yAxisID:'y1' }
       ]
     },
@@ -371,42 +470,48 @@ function renderCharts() {
   });
 }
 
-function renderIndustryStats() {
-  const byIndustry = {};
+function renderGroupStats() {
+  const cfg = TAB_CONFIG[currentTab];
+  const byGroup = {};
   filteredData.forEach(r => {
-    const ind = r.industry || '未回答';
-    if (!byIndustry[ind]) byIndustry[ind] = [];
-    byIndustry[ind].push(r.pct);
+    const g = r.industry || '未回答';
+    if (!byGroup[g]) byGroup[g] = [];
+    byGroup[g].push(r.pct);
   });
-  const sorted = Object.entries(byIndustry)
-    .map(([ind,pcts]) => ({ ind, avg:Math.round(pcts.reduce((s,v)=>s+v,0)/pcts.length), count:pcts.length }))
+  const sorted = Object.entries(byGroup)
+    .map(([g,pcts]) => ({ g, avg:Math.round(pcts.reduce((s,v)=>s+v,0)/pcts.length), count:pcts.length }))
     .sort((a,b) => b.avg - a.avg);
 
-  document.getElementById('industryStats').innerHTML = sorted.map(({ind,avg,count}) => `
+  document.getElementById('groupStats').innerHTML = sorted.map(({g,avg,count}) => `
     <div>
       <div class="flex items-center justify-between mb-1">
-        <span class="text-sm text-gray-700">${ind} <span class="text-gray-400 text-xs">(${count}社)</span></span>
+        <span class="text-sm text-gray-700">${g} <span class="text-gray-400 text-xs">(${count}件)</span></span>
         <span class="text-sm font-bold text-gray-800">${avg}%</span>
       </div>
       <div class="bg-gray-100 rounded-full h-2 overflow-hidden">
-        <div class="h-full rounded-full bg-green-500 transition-all duration-700" style="width:${avg}%"></div>
+        <div class="h-full rounded-full transition-all duration-700" style="width:${avg}%;background:${cfg.barFill}"></div>
       </div>
     </div>`).join('') || '<p class="text-gray-400 text-sm">データなし</p>';
 }
 
 function renderTable() {
+  const cfg = TAB_CONFIG[currentTab];
   const start = (currentPage-1)*PAGE_SIZE;
   const page = filteredData.slice(start, start+PAGE_SIZE);
 
-  document.getElementById('tableBody').innerHTML = page.map((r,i) => `
+  document.getElementById('tableBody').innerHTML = page.map((r,i) => {
+    const atype = r.assessment_type || 'full';
+    const typeLabel = cfg.typeValues[atype] || atype;
+    const isCorp = currentTab === 'corporate';
+    const typeBadge = atype.includes('simple')
+      ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700';
+    return `
     <tr class="text-sm">
       <td class="px-4 py-3 text-gray-500 whitespace-nowrap">${formatDate(r.created_at)}</td>
       <td class="px-4 py-3 font-medium text-gray-800">${esc(r.company_name)}</td>
       <td class="px-4 py-3 text-gray-500">${esc(r.industry||'')}</td>
       <td class="px-4 py-3 text-center">
-        <span class="text-xs px-2 py-0.5 rounded-full ${(r.assessment_type||'full')==='simple' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}">
-          ${(r.assessment_type||'full')==='simple' ? 'お試し' : '本診断'}
-        </span>
+        <span class="text-xs px-2 py-0.5 rounded-full ${typeBadge}">${typeLabel}</span>
       </td>
       <td class="px-4 py-3 text-center">
         <span class="rank-${r.rank} text-xs font-bold px-2 py-0.5 rounded-full">${r.rank}</span>
@@ -417,7 +522,8 @@ function renderTable() {
       <td class="px-4 py-3 text-center">
         <button onclick="showDetail(${start+i})" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-lg transition">詳細</button>
       </td>
-    </tr>`).join('') || '<tr><td colspan="9" class="px-4 py-8 text-center text-gray-400">データがありません</td></tr>';
+    </tr>`;
+  }).join('') || '<tr><td colspan="9" class="px-4 py-8 text-center text-gray-400">データがありません</td></tr>';
 
   const total = filteredData.length;
   const totalPages = Math.ceil(total/PAGE_SIZE);
@@ -439,10 +545,13 @@ function changePage(p) {
 }
 
 function showDetail(idx) {
+  const cfg = TAB_CONFIG[currentTab];
   const r = filteredData[idx];
   document.getElementById('modalCompany').textContent = r.company_name;
+  const atype = r.assessment_type || 'full';
+  const typeLabel = cfg.typeValues[atype] || atype;
   document.getElementById('modalMeta').textContent =
-    [r.industry, r.respondent_name, formatDate(r.created_at), (r.assessment_type||'full')==='simple'?'お試し診断':'本診断'].filter(Boolean).join(' | ');
+    [r.industry, r.respondent_name, formatDate(r.created_at), typeLabel].filter(Boolean).join(' | ');
   document.getElementById('modalScore').textContent = `${r.total_score}/${r.max_score}`;
   const rankEl = document.getElementById('modalRank');
   rankEl.textContent = r.rank;
@@ -450,13 +559,13 @@ function showDetail(idx) {
   document.getElementById('modalPct').textContent = r.pct + '%';
 
   const cs = r.category_scores || {};
-  document.getElementById('modalCategoryList').innerHTML = Object.entries(categoryNames).map(([id,name]) => {
+  document.getElementById('modalCategoryList').innerHTML = Object.entries(cfg.categoryNames).map(([id,name]) => {
     const d = cs[id] || {score:0,max:0,pct:0};
     return `<div class="flex items-center justify-between py-1.5 border-b border-gray-100">
       <span class="text-sm text-gray-700">${name}</span>
       <div class="flex items-center gap-3">
         <div class="w-24 bg-gray-100 rounded-full h-2 overflow-hidden">
-          <div class="h-full bg-green-500 rounded-full" style="width:${d.pct||0}%"></div>
+          <div class="h-full rounded-full" style="width:${d.pct||0}%;background:${cfg.barFill}"></div>
         </div>
         <span class="text-sm font-bold text-gray-800 w-20 text-right">${d.score||0}/${d.max||0}点 (${d.pct||0}%)</span>
       </div>
@@ -469,15 +578,20 @@ function showDetail(idx) {
 function closeModal() { document.getElementById('modal').classList.add('hidden'); }
 
 function exportCSV() {
-  const rows = [['日時','会社名','業種','回答者名','メール','診断種別','ランク','達成率(%)','スコア','満点']];
-  filteredData.forEach(r => rows.push([
-    formatDate(r.created_at), r.company_name||'', r.industry||'', r.respondent_name||'', r.email||'',
-    (r.assessment_type||'full')==='simple'?'お試し':'本診断', r.rank, r.pct, r.total_score, r.max_score
-  ]));
+  const cfg = TAB_CONFIG[currentTab];
+  const tabLabel = currentTab === 'corporate' ? '法人版' : '個人版';
+  const rows = [['日時', cfg.nameLabel, cfg.groupLabel, '回答者名', 'メール', '診断種別', 'ランク', '達成率(%)', 'スコア', '満点']];
+  filteredData.forEach(r => {
+    const atype = r.assessment_type || 'full';
+    rows.push([
+      formatDate(r.created_at), r.company_name||'', r.industry||'', r.respondent_name||'', r.email||'',
+      cfg.typeValues[atype] || atype, r.rank, r.pct, r.total_score, r.max_score
+    ]);
+  });
   const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = `env_assessment_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+  a.download = `env_${currentTab}_${new Date().toISOString().slice(0,10)}.csv`; a.click();
 }
 
 function formatDate(iso) {
