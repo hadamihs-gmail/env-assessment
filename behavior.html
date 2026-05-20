@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>環境行動本診断（個人版）</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; }
+  .gradient-bg { background: linear-gradient(135deg, #1e3a5f 0%, #1d4ed8 50%, #0284c7 100%); }
+  .card { box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+  .answer-btn { transition: all 0.2s; }
+  .progress-fill { transition: width 0.4s ease; }
+  .fade-in { animation: fadeIn 0.3s ease-in; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  @media print { .no-print { display:none; } }
+</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<header class="gradient-bg text-white py-4 px-4 sticky top-0 z-50 shadow-lg">
+  <div class="max-w-2xl mx-auto flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <span class="text-2xl">🌍</span>
+      <div>
+        <span class="font-bold text-lg">環境行動本診断</span>
+        <span class="ml-2 text-xs bg-blue-400 px-2 py-0.5 rounded-full">個人版・60問</span>
+      </div>
+    </div>
+    <div id="progressInfo" class="text-sm opacity-80 hidden">
+      <span id="currentQ">0</span> / 60 問
+    </div>
+  </div>
+</header>
+
+<div id="progressBar" class="hidden h-1.5 bg-blue-900">
+  <div id="progressFill" class="progress-fill h-full bg-blue-300" style="width:0%"></div>
+</div>
+
+<main class="max-w-2xl mx-auto px-4 py-6">
+
+  <!-- スタート画面 -->
+  <div id="screen-start" class="fade-in">
+    <div class="text-center mb-8">
+      <div class="text-6xl mb-4">🌍</div>
+      <h1 class="text-2xl font-bold text-gray-800 mb-2">環境行動本診断（個人版）</h1>
+      <p class="text-gray-500 text-sm">日常生活の環境行動を60問で徹底的に分析します</p>
+    </div>
+
+    <div class="bg-white rounded-2xl card p-6 mb-4">
+      <h2 class="font-bold text-gray-700 mb-4 text-center">📋 基本情報</h2>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">お名前 <span class="text-red-500">*</span></label>
+          <input id="userName" type="text" placeholder="山田 太郎" class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">年代</label>
+          <select id="ageGroup" class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
+            <option value="">選択してください</option>
+            <option>10代</option><option>20代</option><option>30代</option>
+            <option>40代</option><option>50代</option><option>60代以上</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">属性</label>
+          <select id="occupation" class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
+            <option value="">選択してください</option>
+            <option>学生</option><option>フリーランス</option><option>会社員・公務員</option>
+            <option>自営業</option><option>主婦・主夫</option><option>その他</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">
+            メールアドレス <span class="text-red-500">*</span>
+            <span class="text-xs text-gray-400 font-normal ml-1">（診断結果をメールでお送りします）</span>
+          </label>
+          <input id="email" type="email" placeholder="example@email.com" class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-blue-50 rounded-2xl p-4 mb-4 border border-blue-200">
+      <h3 class="font-bold text-blue-800 text-sm mb-2">📌 本診断について</h3>
+      <ul class="text-xs text-blue-700 space-y-1">
+        <li>✓ 全8カテゴリ・60問（所要時間：約10〜15分）</li>
+        <li>✓ お試し診断（30問）とは<strong>異なる切り口</strong>の設問で構成</li>
+        <li>✓ 移動・食・エネルギー・消費など生活全般を網羅</li>
+        <li>✓ 結果はメールでお届けします</li>
+      </ul>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 mb-4 border border-gray-200">
+      <p class="text-xs text-gray-500 text-center mb-2">お試し診断（30問）はこちら</p>
+      <a href="https://hadamihs-gmail.github.io/env-assessment/behavior-simple.html"
+         class="block w-full text-center border border-blue-400 text-blue-600 text-sm font-bold py-2 rounded-xl hover:bg-blue-50 transition">
+        お試し診断（30問）を受ける
+      </a>
+    </div>
+
+    <button onclick="startAssessment()" class="w-full gradient-bg text-white font-bold py-4 rounded-2xl text-lg shadow-lg hover:opacity-90 transition no-print">
+      本診断を開始（60問）→
+    </button>
+  </div>
+
+  <!-- 質問画面 -->
+  <div id="screen-questions" class="hidden fade-in">
+    <div class="bg-white rounded-2xl card p-5 mb-4">
+      <div class="flex items-center gap-2 mb-1">
+        <span id="categoryIcon" class="text-xl"></span>
+        <span id="categoryName" class="text-xs font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full"></span>
+      </div>
+      <p id="questionText" class="text-gray-800 font-medium text-base leading-relaxed"></p>
+      <p id="questionNumber" class="text-xs text-gray-400 mt-2"></p>
+    </div>
+
+    <div class="space-y-3 mb-6">
+      <button onclick="answer(3)" class="answer-btn w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-5 rounded-2xl text-left flex items-center gap-3 shadow">
+        <span class="text-xl">✅</span>
+        <div><div class="font-bold">いつも実践している</div><div class="text-xs opacity-80 font-normal">継続的に取り組んでいる</div></div>
+        <span class="ml-auto font-bold text-lg">3点</span>
+      </button>
+      <button onclick="answer(2)" class="answer-btn w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-5 rounded-2xl text-left flex items-center gap-3 shadow">
+        <span class="text-xl">🔵</span>
+        <div><div class="font-bold">時々実践している</div><div class="text-xs opacity-80 font-normal">できるときは取り組んでいる</div></div>
+        <span class="ml-auto font-bold text-lg">2点</span>
+      </button>
+      <button onclick="answer(1)" class="answer-btn w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-4 px-5 rounded-2xl text-left flex items-center gap-3 shadow">
+        <span class="text-xl">🟡</span>
+        <div><div class="font-bold">やってみたい</div><div class="text-xs opacity-80 font-normal">今後取り組みたいと思っている</div></div>
+        <span class="ml-auto font-bold text-lg">1点</span>
+      </button>
+      <button onclick="answer(0)" class="answer-btn w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-4 px-5 rounded-2xl text-left flex items-center gap-3 shadow">
+        <span class="text-xl">⬜</span>
+        <div><div class="font-bold">していない</div><div class="text-xs opacity-80 font-normal">まだ取り組んでいない</div></div>
+        <span class="ml-auto font-bold text-lg">0点</span>
+      </button>
+    </div>
+
+    <button onclick="goBack()" id="backBtn" class="w-full border border-gray-300 text-gray-500 py-3 rounded-2xl text-sm hover:bg-gray-50 no-print">
+      ← 前の問いに戻る
+    </button>
+  </div>
+
+  <!-- 結果画面 -->
+  <div id="screen-result" class="hidden fade-in">
+    <div class="text-center mb-6">
+      <div class="text-5xl mb-2">📊</div>
+      <h2 class="text-2xl font-bold text-gray-800">本診断 結果</h2>
+      <p id="resultName" class="text-gray-500 text-sm mt-1"></p>
+    </div>
+
+    <div class="bg-white rounded-2xl card p-6 mb-4 text-center">
+      <div class="flex justify-center items-end gap-2 mb-1">
+        <span id="totalScore" class="text-6xl font-black text-gray-800"></span>
+        <span class="text-2xl text-gray-400 mb-2">/ 180点</span>
+      </div>
+      <div id="rankBadge" class="inline-block text-3xl font-black px-6 py-2 rounded-full mb-2"></div>
+      <p id="rankLabel" class="text-gray-600 font-medium"></p>
+      <div class="mt-3 bg-gray-100 rounded-full h-3 overflow-hidden">
+        <div id="scoreBar" class="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full" style="width:0%;transition:width 1s ease"></div>
+      </div>
+      <p id="scorePercent" class="text-sm text-gray-500 mt-1"></p>
+    </div>
+
+    <div class="bg-white rounded-2xl card p-5 mb-4">
+      <h3 class="font-bold text-gray-700 mb-4 text-center">カテゴリ別スコア</h3>
+      <div style="max-height:320px;"><canvas id="radarChart"></canvas></div>
+    </div>
+
+    <div class="bg-white rounded-2xl card p-5 mb-4">
+      <h3 class="font-bold text-gray-700 mb-3">カテゴリ別詳細</h3>
+      <div id="categoryScoreList" class="space-y-3"></div>
+    </div>
+
+    <div class="bg-white rounded-2xl card p-5 mb-4">
+      <h3 class="font-bold text-gray-700 mb-3">💡 行動アドバイス</h3>
+      <div id="adviceList" class="space-y-3"></div>
+    </div>
+
+    <!-- お試し診断への誘導 -->
+    <div style="background:linear-gradient(135deg,#1e3a5f,#0284c7)" class="rounded-2xl p-5 mb-6 text-white">
+      <h3 class="font-bold text-lg mb-1">🔍 お試し診断もあわせて受けてみましょう</h3>
+      <p class="text-sm opacity-90 mb-3">お試し診断（30問）は本診断とは<strong>異なる設問</strong>で構成されています。両方合わせると計90問の総合診断になります。</p>
+      <a href="https://hadamihs-gmail.github.io/env-assessment/behavior-simple.html" target="_blank"
+         class="block w-full text-center bg-white text-blue-700 font-bold py-3 rounded-xl hover:bg-blue-50 transition no-print">
+        お試し診断（30問）を受ける →
+      </a>
+    </div>
+
+    <div class="space-y-3 no-print">
+      <button onclick="saveResult()" id="saveBtn" class="w-full gradient-bg text-white font-bold py-4 rounded-2xl shadow-lg hover:opacity-90 transition">
+        📧 メールで結果を受け取る
+      </button>
+      <button onclick="window.print()" class="w-full border-2 border-blue-600 text-blue-700 font-bold py-3 rounded-2xl hover:bg-blue-50 transition">
+        🖨 印刷・PDF保存
+      </button>
+      <button onclick="restartAssessment()" class="w-full border border-gray-300 text-gray-500 py-3 rounded-2xl hover:bg-gray-50 transition text-sm">
+        🔄 最初からやり直す
+      </button>
+    </div>
+
+    <p id="savedMessage" class="text-center text-blue-600 font-bold text-sm mt-4 hidden"></p>
+    <p id="savedError" class="text-center text-red-500 text-sm mt-4 hidden">⚠️ 送信に失敗しました</p>
+  </div>
+
+</main>
+
+<script>
+const SUPABASE_URL = 'https://qyepcsprvdocyjiyqmiv.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5ZXBjc3BydmRvY3lqaXlxbWl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MzEwODYsImV4cCI6MjA5NDIwNzA4Nn0.ijErc-4sW2NXCNn3ZjZsxQbSOEZaqkIAuoMyklgXkkA';
+const EDGE_FN_URL = 'https://qyepcsprvdocyjiyqmiv.supabase.co/functions/v1/send-assessment-email';
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const categories = [
+  { id:'transport', name:'移動・交通', icon:'🚗', color:'#3b82f6', maxScore:24, questions:[
+    'カーシェアリングやレンタカーを、車の所有に代わって積極的に活用していますか？',
+    '長距離移動の際に、飛行機より新幹線・電車を優先して選んでいますか？',
+    '電動自転車・電動スクーター・EV（電気自動車）など低排出の移動手段を検討・使用していますか？',
+    '複数の用事をまとめて一度の外出で済ませる「まとめ移動」を意識していますか？',
+    '自転車や徒歩での移動ルートを日常的に意識して選んでいますか？',
+    '旅行の際に、現地での公共交通機関の利用を積極的に選んでいますか？',
+    'カーボンオフセット（排出量の相殺）プログラムを利用・検討したことがありますか？',
+    'リモートワークやオンライン会議を積極的に活用して、移動そのものを減らしていますか？',
+  ]},
+  { id:'food', name:'食生活', icon:'🥗', color:'#10b981', maxScore:24, questions:[
+    'プラントベース食品（大豆ミート・代替乳など）を積極的に試していますか？',
+    '食品のパッケージ情報（原産地・添加物・包装素材）を意識して確認していますか？',
+    'フードシェアリングアプリや食品ロス削減サービスを利用していますか？',
+    '家庭菜園やベランダ栽培で一部の食材を自給していますか？',
+    'まとめ買いよりも必要な分だけ購入し、新鮮なうちに使い切る工夫をしていますか？',
+    'コンビニや自動販売機での飲料購入を減らし、自分で用意することを意識していますか？',
+    'フェアトレード食品・有機農産物・認証食品を積極的に選んでいますか？',
+    '外食時に食べ残しを出さないよう、量を調整して注文していますか？',
+  ]},
+  { id:'energy', name:'自宅エネルギー', icon:'💡', color:'#f59e0b', maxScore:24, questions:[
+    '太陽光発電や太陽熱温水器の設置を実施・真剣に検討していますか？',
+    '自宅の照明をすべてLEDに切り替えていますか？',
+    'スマートプラグやタイマーを活用して、家電の待機電力をコントロールしていますか？',
+    '断熱カーテン・窓用断熱フィルムを活用して冷暖房効率を高めていますか？',
+    '電気の使用量を定期的に確認し、節電目標を設定・意識していますか？',
+    '給湯器の温度設定を適切に管理し、お湯の無駄遣いを防いでいますか？',
+    '消費電力の大きい家電（乾燥機・電気ヒーター等）の使用を意識的に抑えていますか？',
+    '蓄電池やV2H（電気自動車を蓄電池として活用する仕組み）に関心を持っていますか？',
+  ]},
+  { id:'shopping', name:'消費・買い物', icon:'🛍', color:'#8b5cf6', maxScore:24, questions:[
+    '製品の耐久性・修理しやすさを、購入時の重要な判断基準にしていますか？',
+    '友人・知人・コミュニティでの物のシェアや貸し借りを積極的に行っていますか？',
+    'ファストファッションを避け、長く使える質の良い衣服を選んでいますか？',
+    '衣料品の染色・製造過程の環境への影響を意識して選んでいますか？',
+    'ネット通販の際に配送回数を減らすまとめ注文や、エコ包装オプションを選んでいますか？',
+    '製品のライフサイクル全体（製造・使用・廃棄）の環境負荷を意識して購入を決めていますか？',
+    '地域の商店街や小規模事業者での購買を意識的に選んでいますか？',
+    '不要になった家電・衣類をリサイクルショップやメーカー回収に積極的に出していますか？',
+  ]},
+  { id:'waste', name:'ごみ・リサイクル', icon:'🗑', color:'#059669', maxScore:21, questions:[
+    '生ごみをコンポストや自治体の生ごみ処理機で堆肥化していますか？',
+    'ラップ・使い捨てビニール袋の代わりに、繰り返し使えるラップやエコバッグを使っていますか？',
+    '購入品の過剰包装を断る・パッケージフリーの店を利用することがありますか？',
+    '使用済みの電池・蛍光灯・インクカートリッジを適切なリサイクルルートに出していますか？',
+    '捨てる前に「まだ使えるか」「再利用できるか」を必ず確認していますか？',
+    '地域の不用品交換会・リユースイベントに参加したことがありますか？',
+    '空き瓶・空き缶をリターナブル容器として積極的に活用していますか？',
+  ]},
+  { id:'water', name:'水・節水', icon:'💧', color:'#0ea5e9', maxScore:21, questions:[
+    'シャワーの時間を意識的に短くする（例：5分以内）ようにしていますか？',
+    '節水シャワーヘッドや節水蛇口アダプターを使用していますか？',
+    '食器洗いをため洗いにするなど、水をまとめて使う工夫をしていますか？',
+    '雨水を庭木の水やりや清掃に活用する仕組みを取り入れていますか？',
+    '洗濯をまとめて行い、洗濯回数を減らしていますか？',
+    '水道の水漏れがないか定期的に確認していますか？',
+    '海・川・湿地などの水環境保全活動に参加・支援したことがありますか？',
+  ]},
+  { id:'digital', name:'デジタル行動', icon:'📱', color:'#6366f1', maxScore:21, questions:[
+    'ストリーミング動画の視聴時間を意識して管理し、データ消費を抑えていますか？',
+    'クラウドストレージのデータを定期的に整理・削除してサーバーのエネルギー消費を減らしていますか？',
+    'オンライン会議の際にビデオをオフにするなど、通信負荷を意識的に減らしていますか？',
+    '購入前にデジタル修理マニュアルを調べて自己修理を試みていますか？',
+    'SNSやメールのダークモード使用など、画面のエネルギー節約を心がけていますか？',
+    '使用済みの小型家電・スマートフォンをメーカー・自治体のリサイクルに出していますか？',
+    'グリーンエネルギーを使うサービス・企業のデジタルサービスを意識して選んでいますか？',
+  ]},
+  { id:'social', name:'社会参加', icon:'🤝', color:'#dc2626', maxScore:21, questions:[
+    '環境に関する書籍・ドキュメンタリー・オンライン講座を積極的に学んでいますか？',
+    '投票の際に、候補者・政党の環境政策を判断基準の一つにしていますか？',
+    '職場・学校での環境改善提案や取り組みに参加・推進していますか？',
+    'SNSや日常会話で環境問題に関する正確な情報を発信・共有していますか？',
+    '環境NGO・NPO・市民団体への参加や寄付を行っていますか？',
+    '地元の自然環境（里山・海岸・公園等）の保全活動に参加していますか？',
+    '次世代（子ども・若者）への環境教育や意識啓発活動を支援していますか？',
+  ]},
+];
+
+const totalQuestions = categories.reduce((s,c)=>s+c.questions.length,0);
+const MAX_SCORE = categories.reduce((s,c)=>s+c.maxScore,0);
+
+let state = { currentCategoryIndex:0, currentQuestionIndex:0, answers:{}, userName:'', ageGroup:'', occupation:'', email:'' };
+
+function startAssessment() {
+  const name = document.getElementById('userName').value.trim();
+  if (!name) { document.getElementById('userName').focus(); document.getElementById('userName').classList.add('ring-2','ring-red-400'); return; }
+  const email = document.getElementById('email').value.trim();
+  if (!email) { document.getElementById('email').focus(); document.getElementById('email').classList.add('ring-2','ring-red-400'); return; }
+  state.userName = name;
+  state.ageGroup = document.getElementById('ageGroup').value;
+  state.occupation = document.getElementById('occupation').value;
+  state.email = email;
+  state.currentCategoryIndex = 0; state.currentQuestionIndex = 0; state.answers = {};
+  showScreen('questions');
+  document.getElementById('progressInfo').classList.remove('hidden');
+  document.getElementById('progressBar').classList.remove('hidden');
+  renderQuestion();
+}
+
+function getGlobalIndex() {
+  let idx = 0;
+  for (let i=0; i<state.currentCategoryIndex; i++) idx += categories[i].questions.length;
+  return idx + state.currentQuestionIndex;
+}
+
+function renderQuestion() {
+  const cat = categories[state.currentCategoryIndex];
+  const gi = getGlobalIndex();
+  document.getElementById('categoryIcon').textContent = cat.icon;
+  document.getElementById('categoryName').textContent = cat.name;
+  document.getElementById('questionText').textContent = cat.questions[state.currentQuestionIndex];
+  document.getElementById('questionNumber').textContent = `${cat.name} ${state.currentQuestionIndex+1} / ${cat.questions.length}問目`;
+  document.getElementById('currentQ').textContent = gi+1;
+  document.getElementById('progressFill').style.width = (gi/totalQuestions*100)+'%';
+  document.getElementById('backBtn').disabled = gi===0;
+  document.getElementById('backBtn').style.opacity = gi===0?'0.3':'1';
+  const card = document.querySelector('#screen-questions .bg-white');
+  card.classList.remove('fade-in'); void card.offsetWidth; card.classList.add('fade-in');
+}
+
+function answer(pts) {
+  state.answers[`${state.currentCategoryIndex}_${state.currentQuestionIndex}`] = pts;
+  setTimeout(() => {
+    const cat = categories[state.currentCategoryIndex];
+    if (state.currentQuestionIndex < cat.questions.length-1) { state.currentQuestionIndex++; }
+    else if (state.currentCategoryIndex < categories.length-1) { state.currentCategoryIndex++; state.currentQuestionIndex=0; }
+    else { showResult(); return; }
+    renderQuestion();
+  }, 150);
+}
+
+function goBack() {
+  if (state.currentQuestionIndex>0) { state.currentQuestionIndex--; }
+  else if (state.currentCategoryIndex>0) { state.currentCategoryIndex--; state.currentQuestionIndex=categories[state.currentCategoryIndex].questions.length-1; }
+  renderQuestion();
+}
+
+function calcScores() {
+  const catScores = {};
+  let total = 0;
+  categories.forEach((cat,ci) => {
+    let score = 0;
+    cat.questions.forEach((_,qi) => { score += state.answers[`${ci}_${qi}`]||0; });
+    catScores[cat.id] = { score, max:cat.maxScore, pct:Math.round(score/cat.maxScore*100) };
+    total += score;
+  });
+  return { catScores, totalScore:total };
+}
+
+function getRank(pct) {
+  if (pct>=89) return {rank:'S',label:'地球にやさしい行動の達人',color:'#7c3aed',bg:'#f3e8ff'};
+  if (pct>=75) return {rank:'A',label:'環境行動リーダー',color:'#059669',bg:'#d1fae5'};
+  if (pct>=60) return {rank:'B',label:'環境行動実践者',color:'#d97706',bg:'#fef3c7'};
+  if (pct>=40) return {rank:'C',label:'環境行動入門者',color:'#ea580c',bg:'#ffedd5'};
+  return {rank:'D',label:'環境行動をスタートしよう',color:'#dc2626',bg:'#fee2e2'};
+}
+
+const adviceData = {
+  transport:{high:'移動による環境負荷の削減が高いレベルで実践できています。次はカーボンオフセットへの参加や、EV・燃料電池車への切り替えを検討しましょう。',mid:'移動手段の見直しを少し進めましょう。リモートワークの活用やカーシェアリング導入で大幅に排出量を減らせます。',low:'まず通勤・通学ルートで公共交通や自転車を取り入れることから始めましょう。移動の排出量は生活の中でも大きな割合を占めます。'},
+  food:{high:'食生活の環境配慮が高い水準に達しています。フェアトレード・有機食品の比率をさらに高め、食の選択を通じた社会変革を続けましょう。',mid:'プラントベース食品や地産地消をもう少し取り入れ、食品ロスをさらに減らすことを意識しましょう。',low:'まず食品ロスの削減から始めましょう。冷蔵庫の整理と計画的な買い物が最初の一歩です。'},
+  energy:{high:'自宅のエネルギー管理は優秀な水準です。再生可能エネルギーの自家発電や蓄電設備の導入でさらに進化できます。',mid:'LED照明の完全切り替えと待機電力の管理を徹底しましょう。省エネ効果は積み重ねで大きくなります。',low:'まずこまめな消灯と適切なエアコン温度設定から始めましょう。電気代の削減にも直結します。'},
+  shopping:{high:'サステナブルな消費行動が高いレベルで実践できています。購買を通じた企業への環境メッセージ発信を続けましょう。',mid:'製品の耐久性や修理可能性をより重視し、不要品はリユースに回す習慣を強化しましょう。',low:'まず「本当に必要か」を一度立ち止まって考える習慣から始めましょう。衝動買いを減らすだけで大きな効果があります。'},
+  waste:{high:'ごみの減量・リサイクルへの意識が高い状態です。コンポスト導入や包装フリー購買でさらにゼロウェイストに近づけましょう。',mid:'分別・リユースの徹底に加え、購買段階からごみを減らす選択を意識しましょう。リサイクル可能品のルートも確認を。',low:'まず正しい分別とリサイクルから始めましょう。使用済み電池や家電の適切な回収方法を調べることが第一歩です。'},
+  water:{high:'節水意識が高い水準です。雨水収集システムや節水型設備の導入でさらに水の有効活用ができます。',mid:'シャワー時間の短縮と食器のため洗いを徹底しましょう。小さな積み重ねが年間で大きな節水につながります。',low:'まず蛇口の閉め忘れをなくすことから始めましょう。歯磨き中に水を止めるだけで1日数リットルの節水になります。'},
+  digital:{high:'デジタル行動の環境配慮ができています。クラウドデータの整理と機器の長期使用を続け、デジタルカーボンフットプリントを意識しましょう。',mid:'スマホ・PCの修理・長期使用を心がけ、不要なストリーミングやクラウドデータを定期的に整理しましょう。',low:'まず使っていないアプリの削除と、充電後のコンセント抜きから始めましょう。デジタル機器のエネルギー消費は意外に大きいです。'},
+  social:{high:'環境への社会参加意識が高い状態です。SNSでの発信や政策への関与を通じて、さらに広い変革を促していきましょう。',mid:'環境政策への関心を高め、地域活動や職場での改善提案にもチャレンジしましょう。一人の行動が周囲を変えます。',low:'まず環境問題に関する情報を週1回意識して収集することから始めましょう。知識が行動変容の第一歩です。'},
+};
+
+function showResult() {
+  showScreen('result');
+  document.getElementById('progressInfo').classList.add('hidden');
+  document.getElementById('progressBar').classList.add('hidden');
+  const {catScores,totalScore} = calcScores();
+  const pct = Math.round(totalScore/MAX_SCORE*100);
+  const rankInfo = getRank(pct);
+  const profile = [state.ageGroup, state.occupation].filter(Boolean).join('・');
+  document.getElementById('resultName').textContent = state.userName + (profile ? `（${profile}）` : '');
+  document.getElementById('totalScore').textContent = totalScore;
+  const badge = document.getElementById('rankBadge');
+  badge.textContent = `ランク ${rankInfo.rank}`;
+  badge.style.color = rankInfo.color; badge.style.background = rankInfo.bg;
+  document.getElementById('rankLabel').textContent = rankInfo.label;
+  setTimeout(()=>{ document.getElementById('scoreBar').style.width = pct+'%'; },100);
+  document.getElementById('scorePercent').textContent = `達成率 ${pct}%（${totalScore} / ${MAX_SCORE}点）`;
+
+  const list = document.getElementById('categoryScoreList');
+  list.innerHTML = '';
+  categories.forEach(cat => {
+    const cs = catScores[cat.id];
+    const div = document.createElement('div');
+    div.innerHTML = `<div class="flex items-center justify-between mb-1"><span class="text-sm font-medium text-gray-700">${cat.icon} ${cat.name}</span><span class="text-sm font-bold text-gray-800">${cs.score}/${cs.max}点 (${cs.pct}%)</span></div><div class="bg-gray-100 rounded-full h-2.5 overflow-hidden"><div class="h-full rounded-full" style="width:${cs.pct}%;background:${cat.color};transition:width 0.8s ease"></div></div>`;
+    list.appendChild(div);
+  });
+
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  if (window._chart) window._chart.destroy();
+  window._chart = new Chart(ctx, {
+    type:'radar',
+    data:{ labels:categories.map(c=>c.name), datasets:[{ label:'達成率（%）', data:categories.map(c=>catScores[c.id].pct), backgroundColor:'rgba(37,99,235,0.2)', borderColor:'rgba(37,99,235,0.8)', borderWidth:2, pointBackgroundColor:categories.map(c=>c.color), pointRadius:5 }] },
+    options:{ responsive:true, maintainAspectRatio:true, scales:{ r:{ min:0, max:100, ticks:{stepSize:25,font:{size:10}}, pointLabels:{font:{size:10}} } }, plugins:{legend:{display:false}} }
+  });
+
+  const advEl = document.getElementById('adviceList');
+  advEl.innerHTML = '';
+  categories.forEach(cat => {
+    const pctVal = catScores[cat.id].pct;
+    const level = pctVal>=70?'high':pctVal>=40?'mid':'low';
+    const div = document.createElement('div');
+    div.className = 'p-3 rounded-xl border-l-4 bg-gray-50';
+    div.style.borderColor = cat.color;
+    div.innerHTML = `<div class="font-bold text-sm mb-1" style="color:${cat.color}">${cat.icon} ${cat.name}</div><p class="text-xs text-gray-600 leading-relaxed">${adviceData[cat.id][level]}</p>`;
+    advEl.appendChild(div);
+  });
+}
+
+async function saveResult() {
+  const btn = document.getElementById('saveBtn');
+  btn.textContent = '⏳ 送信中...'; btn.disabled = true;
+  const {catScores,totalScore} = calcScores();
+  const pct = Math.round(totalScore/MAX_SCORE*100);
+  const {rank} = getRank(pct);
+  const profile = [state.ageGroup, state.occupation].filter(Boolean).join('・');
+  try {
+    const {error} = await db.from('env_assessment_results').insert({
+      company_name: state.userName,
+      industry: profile || null,
+      email: state.email,
+      total_score: totalScore, max_score: MAX_SCORE, rank,
+      category_scores: catScores, answers: state.answers,
+      assessment_type: 'behavior_full'
+    });
+    if (error) throw error;
+
+    try {
+      await fetch(EDGE_FN_URL, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ email:state.email, companyName:state.userName, industry:profile, totalScore, maxScore:MAX_SCORE, rank, categoryScores:catScores, assessmentType:'behavior_full' })
+      });
+    } catch(e) { console.warn('Email failed:', e); }
+
+    const msgEl = document.getElementById('savedMessage');
+    msgEl.textContent = `✅ ${state.email} に結果を送信しました`;
+    msgEl.classList.remove('hidden');
+    btn.textContent = '✅ 送信済み';
+  } catch(e) {
+    console.error(e);
+    document.getElementById('savedError').classList.remove('hidden');
+    btn.textContent = '📧 メールで結果を受け取る'; btn.disabled = false;
+  }
+}
+
+function showScreen(name) {
+  ['start','questions','result'].forEach(s=>document.getElementById(`screen-${s}`).classList.add('hidden'));
+  const el = document.getElementById(`screen-${name}`);
+  el.classList.remove('hidden','fade-in'); void el.offsetWidth; el.classList.add('fade-in');
+  window.scrollTo(0,0);
+}
+
+function restartAssessment() {
+  state = {currentCategoryIndex:0,currentQuestionIndex:0,answers:{},userName:'',ageGroup:'',occupation:'',email:''};
+  ['userName','email'].forEach(id=>document.getElementById(id).value='');
+  ['ageGroup','occupation'].forEach(id=>document.getElementById(id).value='');
+  ['savedMessage','savedError'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  document.getElementById('saveBtn').textContent='📧 メールで結果を受け取る';
+  document.getElementById('saveBtn').disabled=false;
+  document.getElementById('progressFill').style.width='0%';
+  document.getElementById('progressInfo').classList.add('hidden');
+  document.getElementById('progressBar').classList.add('hidden');
+  showScreen('start');
+}
+</script>
+</body>
+</html>

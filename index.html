@@ -83,8 +83,8 @@
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-600 mb-1">
-            メールアドレス
-            <span class="text-xs text-gray-400 font-normal ml-1">（診断結果をメールで受け取れます）</span>
+            メールアドレス <span class="text-red-500">*</span>
+            <span class="text-xs text-gray-400 font-normal ml-1">（診断結果をメールでお送りします）</span>
           </label>
           <input id="email" type="email" placeholder="example@company.com" class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
         </div>
@@ -190,7 +190,7 @@
     <!-- アクションボタン -->
     <div class="space-y-3 no-print">
       <button onclick="saveResult()" id="saveBtn" class="w-full gradient-bg text-white font-bold py-4 rounded-2xl shadow-lg hover:opacity-90 transition">
-        📤 結果を保存する
+        📧 メールで結果を受け取る
       </button>
       <button onclick="window.print()" class="w-full border-2 border-green-600 text-green-700 font-bold py-3 rounded-2xl hover:bg-green-50 transition">
         🖨 印刷・PDF保存
@@ -373,6 +373,11 @@ function startAssessment() {
   state.industry = document.getElementById('industry').value;
   state.respondentName = document.getElementById('respondentName').value.trim();
   state.email = document.getElementById('email').value.trim();
+  if (!state.email) {
+    document.getElementById('email').focus();
+    document.getElementById('email').classList.add('ring-2', 'ring-red-400');
+    return;
+  }
   state.currentCategoryIndex = 0;
   state.currentQuestionIndex = 0;
   state.answers = {};
