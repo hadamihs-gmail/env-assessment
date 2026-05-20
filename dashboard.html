@@ -180,7 +180,7 @@
 const SUPABASE_URL = 'https://qyepcsprvdocyjiyqmiv.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5ZXBjc3BydmRvY3lqaXlxbWl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MzEwODYsImV4cCI6MjA5NDIwNzA4Nn0.ijErc-4sW2NXCNn3ZjZsxQbSOEZaqkIAuoMyklgXkkA';
 const ADMIN_PASSWORD = 'kankyokei2024';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const categoryNames = {
   energy:'⚡ エネルギー管理', waste:'♻️ 廃棄物管理', water:'💧 水資源管理',
@@ -211,7 +211,7 @@ function login() {
 }
 
 async function loadData() {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('env_assessment_results')
     .select('*')
     .order('created_at', { ascending: false });
