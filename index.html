@@ -11,8 +11,12 @@
   body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; }
   .gradient-bg { background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%); }
   .card { box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-  .answer-btn { transition: all 0.2s; }
-  .answer-btn.selected { transform: scale(1.02); }
+  .answer-btn { transition: all 0.18s ease; }
+  .ans-idle { opacity: 0.6; }
+  .ans-selected { opacity: 1; transform: scale(1.02); box-shadow: 0 0 0 3px #fff, 0 0 0 5px rgba(0,0,0,0.3), 0 8px 20px rgba(0,0,0,0.2); }
+  .ans-dim { opacity: 0.25; transform: scale(0.98); }
+  #confirmBtn:not(:disabled) { cursor: pointer; }
+  #confirmBtn:disabled { cursor: not-allowed; }
   .progress-fill { transition: width 0.4s ease; }
   .fade-in { animation: fadeIn 0.3s ease-in; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -117,28 +121,33 @@
       <p id="questionNumber" class="text-xs text-gray-400 mt-2"></p>
     </div>
 
-    <div id="answerButtons" class="space-y-3 mb-6">
-      <button onclick="answer(3)" class="answer-btn w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-5 rounded-2xl text-left flex items-center gap-3 shadow">
+    <div id="answerButtons" class="space-y-3 mb-4">
+      <button onclick="selectAnswer(3)" id="opt-3" class="answer-btn ans-idle w-full bg-green-600 text-white font-bold py-4 px-5 rounded-2xl text-left flex items-center gap-3 shadow">
         <span class="text-xl">✅</span>
         <div><div class="font-bold">実施済み</div><div class="text-xs opacity-80 font-normal">すでに継続的に取り組んでいる</div></div>
         <span class="ml-auto font-bold text-lg">3点</span>
       </button>
-      <button onclick="answer(2)" class="answer-btn w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-5 rounded-2xl text-left flex items-center gap-3 shadow">
+      <button onclick="selectAnswer(2)" id="opt-2" class="answer-btn ans-idle w-full bg-blue-500 text-white font-bold py-4 px-5 rounded-2xl text-left flex items-center gap-3 shadow">
         <span class="text-xl">🔵</span>
         <div><div class="font-bold">一部実施</div><div class="text-xs opacity-80 font-normal">取り組んでいるが不十分</div></div>
         <span class="ml-auto font-bold text-lg">2点</span>
       </button>
-      <button onclick="answer(1)" class="answer-btn w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-4 px-5 rounded-2xl text-left flex items-center gap-3 shadow">
+      <button onclick="selectAnswer(1)" id="opt-1" class="answer-btn ans-idle w-full bg-yellow-500 text-white font-bold py-4 px-5 rounded-2xl text-left flex items-center gap-3 shadow">
         <span class="text-xl">🟡</span>
         <div><div class="font-bold">検討中</div><div class="text-xs opacity-80 font-normal">今後取り組む予定がある</div></div>
         <span class="ml-auto font-bold text-lg">1点</span>
       </button>
-      <button onclick="answer(0)" class="answer-btn w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-4 px-5 rounded-2xl text-left flex items-center gap-3 shadow">
+      <button onclick="selectAnswer(0)" id="opt-0" class="answer-btn ans-idle w-full bg-gray-400 text-white font-bold py-4 px-5 rounded-2xl text-left flex items-center gap-3 shadow">
         <span class="text-xl">⬜</span>
         <div><div class="font-bold">未着手</div><div class="text-xs opacity-80 font-normal">まだ取り組んでいない</div></div>
         <span class="ml-auto font-bold text-lg">0点</span>
       </button>
     </div>
+
+    <button id="confirmBtn" onclick="confirmAnswer()" disabled
+      class="w-full gradient-bg text-white font-bold py-4 rounded-2xl text-lg shadow-lg transition opacity-40 mb-3 no-print">
+      この回答で決定する →
+    </button>
 
     <button onclick="goBack()" id="backBtn" class="w-full border border-gray-300 text-gray-500 py-3 rounded-2xl text-sm hover:bg-gray-50 no-print">
       ← 前の問いに戻る
@@ -411,15 +420,8 @@ function renderQuestion() {
 
   // 保存済みの回答を反映
   const key = `${state.currentCategoryIndex}_${state.currentQuestionIndex}`;
-  const saved = state.answers[key];
-  const btns = document.querySelectorAll('.answer-btn');
-  btns.forEach((btn, i) => {
-    const pts = [3, 2, 1, 0][i];
-    btn.classList.toggle('selected', saved === pts);
-    btn.classList.toggle('ring-4', saved === pts);
-    btn.classList.toggle('ring-white', saved === pts);
-    btn.classList.toggle('ring-offset-2', saved === pts);
-  });
+  selectedAnswer = (key in state.answers) ? state.answers[key] : null;
+  updateAnswerUI();
 
   // フェードイン
   const card = document.querySelector('#screen-questions .bg-white');
@@ -436,25 +438,54 @@ function getGlobalIndex() {
   return idx + state.currentQuestionIndex;
 }
 
-function answer(points) {
+let selectedAnswer = null;
+
+function selectAnswer(pts) {
+  selectedAnswer = pts;
+  updateAnswerUI();
+}
+
+function updateAnswerUI() {
+  [3, 2, 1, 0].forEach(pts => {
+    const btn = document.getElementById('opt-' + pts);
+    if (!btn) return;
+    btn.classList.remove('ans-idle', 'ans-selected', 'ans-dim');
+    if (selectedAnswer === null) {
+      btn.classList.add('ans-idle');
+    } else if (selectedAnswer === pts) {
+      btn.classList.add('ans-selected');
+    } else {
+      btn.classList.add('ans-dim');
+    }
+  });
+  const confirmBtn = document.getElementById('confirmBtn');
+  if (confirmBtn) {
+    confirmBtn.disabled = selectedAnswer === null;
+    confirmBtn.classList.toggle('opacity-40', selectedAnswer === null);
+    confirmBtn.classList.toggle('opacity-100', selectedAnswer !== null);
+    confirmBtn.classList.toggle('hover:opacity-90', selectedAnswer !== null);
+  }
+}
+
+function confirmAnswer() {
+  if (selectedAnswer === null) return;
   const key = `${state.currentCategoryIndex}_${state.currentQuestionIndex}`;
   const isNew = !(key in state.answers);
-  state.answers[key] = points;
+  state.answers[key] = selectedAnswer;
   if (isNew) state.totalAnswered++;
+  selectedAnswer = null;
 
-  setTimeout(() => {
-    const cat = categories[state.currentCategoryIndex];
-    if (state.currentQuestionIndex < cat.questions.length - 1) {
-      state.currentQuestionIndex++;
-    } else if (state.currentCategoryIndex < categories.length - 1) {
-      state.currentCategoryIndex++;
-      state.currentQuestionIndex = 0;
-    } else {
-      showResult();
-      return;
-    }
-    renderQuestion();
-  }, 150);
+  const cat = categories[state.currentCategoryIndex];
+  if (state.currentQuestionIndex < cat.questions.length - 1) {
+    state.currentQuestionIndex++;
+  } else if (state.currentCategoryIndex < categories.length - 1) {
+    state.currentCategoryIndex++;
+    state.currentQuestionIndex = 0;
+  } else {
+    showResult();
+    return;
+  }
+  renderQuestion();
 }
 
 function goBack() {
